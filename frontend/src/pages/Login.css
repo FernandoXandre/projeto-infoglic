@@ -1,0 +1,406 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap');
+
+/* ── Paleta extraída diretamente da logo Infoglic ── */
+:root {
+  --indigo-deep:   #1e1660;   /* fundo escuro da imagem */
+  --indigo-mid:    #2e22a0;   /* azul púrpura do fundo */
+  --cobalt:        #1e4db7;   /* azul do glicosímetro */
+  --cobalt-light:  #2f66e0;
+  --crimson:       #c01e2c;   /* vermelho do coração */
+  --crimson-glow:  #e02535;
+  --gold:          #c9a030;   /* dourado das letras Infoglic */
+  --gold-light:    #e8b83a;
+  --gold-pale:     #fdf3d0;
+  --white:         #ffffff;
+  --off-white:     #f0eeff;
+  --muted:         #8880c0;
+  --border:        rgba(201, 160, 48, 0.22);
+  --border-input:  rgba(100, 90, 200, 0.3);
+  --shadow-card:   0 32px 80px rgba(10, 8, 50, 0.55);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--indigo-deep);
+  color: var(--white);
+  overflow-x: hidden;
+}
+
+/* ── Wrapper + orbs atmosféricos ───────────────── */
+.login-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  position: relative;
+  background:
+    radial-gradient(ellipse at 50% 0%,   rgba(46, 34, 160, 0.9) 0%, transparent 65%),
+    radial-gradient(ellipse at 100% 100%, rgba(192, 30, 44, 0.25) 0%, transparent 55%),
+    radial-gradient(ellipse at 0%   80%,  rgba(30, 77, 183, 0.25) 0%, transparent 50%),
+    var(--indigo-deep);
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  animation: pulse 8s ease-in-out infinite;
+}
+.orb-1 { width: 420px; height: 420px; background: rgba(46,34,160,.35); top:-120px; right:-80px; animation-delay: 0s; }
+.orb-2 { width: 300px; height: 300px; background: rgba(192,30,44,.2);  bottom:-80px; left:0;   animation-delay: 3s; }
+.orb-3 { width: 250px; height: 250px; background: rgba(201,160,48,.12); top:40%; left:15%;    animation-delay: 5s; }
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%       { transform: scale(1.12); opacity: 0.7; }
+}
+
+/* ── Card principal (split layout) ─────────────── */
+.login-card {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+  max-width: 840px;
+  border-radius: 28px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+  animation: cardUp .55s cubic-bezier(.22,1,.36,1) both;
+}
+
+@keyframes cardUp {
+  from { opacity: 0; transform: translateY(32px) scale(.98); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+/* ── Lado esquerdo — logo ───────────────────────── */
+.login-lado-logo {
+  background:
+    radial-gradient(ellipse at 50% 0%,   rgba(46,34,160,.9)  0%, transparent 70%),
+    radial-gradient(ellipse at 50% 100%, rgba(192,30,44,.25) 0%, transparent 60%),
+    linear-gradient(160deg, #1a1258 0%, #0e0b3a 100%);
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  border-right: 1px solid var(--border);
+}
+
+/* Círculo da logo */
+.logo-circulo {
+  width: 170px; height: 170px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--gold);
+  box-shadow:
+    0 0 0 6px rgba(201, 160, 48, 0.12),
+    0 0 40px rgba(201, 160, 48, 0.25),
+    0 12px 40px rgba(0,0,0,.5);
+  margin-bottom: 1.1rem;
+  animation: logoPop .6s cubic-bezier(.34,1.56,.64,1) .2s both;
+  flex-shrink: 0;
+}
+
+@keyframes logoPop {
+  from { transform: scale(.6); opacity: 0; }
+  to   { transform: scale(1);  opacity: 1; }
+}
+
+.logo-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.logo-nome {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: .06em;
+  text-shadow: 0 2px 12px rgba(201,160,48,.4);
+  margin-bottom: .3rem;
+}
+
+.logo-slogan {
+  font-size: .78rem;
+  color: var(--muted);
+  font-weight: 300;
+  letter-spacing: .04em;
+  margin-bottom: 1.5rem;
+}
+
+.divisor-v {
+  width: 40px; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  margin-bottom: 1.5rem;
+  opacity: .6;
+}
+
+.features-list {
+  list-style: none;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: .65rem;
+  text-align: left;
+}
+
+.features-list li {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  font-size: .82rem;
+  color: rgba(255,255,255,.65);
+  font-weight: 400;
+  padding: .5rem .75rem;
+  border-radius: 8px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.06);
+  transition: all .2s;
+}
+
+.features-list li:hover {
+  background: rgba(201,160,48,.08);
+  border-color: rgba(201,160,48,.2);
+  color: rgba(255,255,255,.9);
+}
+
+.feat-icon { font-size: .95rem; }
+
+/* ── Lado direito — formulário ──────────────────── */
+.login-lado-form {
+  background: linear-gradient(160deg, #13104a 0%, #0c0930 100%);
+  padding: 2.5rem 2.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.form-header { margin-bottom: 1.75rem; }
+
+.form-header h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.9rem;
+  font-weight: 600;
+  color: var(--white);
+  line-height: 1.2;
+  margin-bottom: .35rem;
+}
+
+.form-header p {
+  font-size: .85rem;
+  color: var(--muted);
+  font-weight: 300;
+}
+
+/* ── Alerta erro ────────────────────────────────── */
+.alerta-erro {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  background: rgba(192, 30, 44, .15);
+  border: 1px solid rgba(192, 30, 44, .35);
+  border-radius: 9px;
+  padding: .65rem .9rem;
+  font-size: .83rem;
+  color: #ff8080;
+  margin-bottom: 1.25rem;
+  animation: shake .35s ease;
+}
+.alerta-icon { font-size: .95rem; }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25%       { transform: translateX(-6px); }
+  75%       { transform: translateX(6px); }
+}
+
+/* ── Campos ─────────────────────────────────────── */
+.login-form { display: flex; flex-direction: column; gap: 1.1rem; }
+
+.campo-grupo { display: flex; flex-direction: column; gap: .45rem; }
+
+.campo-grupo label {
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.link-esqueci {
+  font-size: .73rem;
+  color: var(--gold);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color .2s;
+}
+.link-esqueci:hover { color: var(--gold-light); }
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: .85rem;
+  font-size: .9rem;
+  pointer-events: none;
+  opacity: .55;
+}
+
+.input-wrapper input {
+  width: 100%;
+  padding: .78rem .85rem .78rem 2.4rem;
+  background: rgba(255,255,255,.05);
+  border: 1.5px solid var(--border-input);
+  border-radius: 10px;
+  font-size: .92rem;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: var(--white);
+  outline: none;
+  transition: all .22s;
+}
+
+.input-wrapper input::placeholder { color: rgba(136,128,192,.5); }
+
+.input-wrapper input:focus {
+  border-color: var(--gold);
+  background: rgba(201,160,48,.06);
+  box-shadow: 0 0 0 3px rgba(201,160,48,.12);
+}
+
+.btn-olho {
+  position: absolute;
+  right: .75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: .95rem;
+  opacity: .5;
+  transition: opacity .2s;
+  padding: 0;
+  line-height: 1;
+}
+.btn-olho:hover { opacity: .9; }
+
+/* ── Botão entrar ───────────────────────────────── */
+.btn-entrar {
+  margin-top: .5rem;
+  padding: .88rem;
+  background: linear-gradient(135deg, var(--cobalt) 0%, var(--indigo-mid) 100%);
+  color: var(--white);
+  border: 1px solid rgba(201,160,48,.3);
+  border-radius: 10px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .95rem;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: .03em;
+  transition: all .25s;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-entrar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(201,160,48,.2) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.btn-entrar:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(30,77,183,.5), 0 0 16px rgba(201,160,48,.2);
+  border-color: rgba(201,160,48,.6);
+}
+
+.btn-entrar:active { transform: translateY(0); }
+
+.btn-entrar:disabled { opacity: .6; cursor: not-allowed; }
+
+/* ── Spinner ────────────────────────────────────── */
+.spinner {
+  display: inline-block;
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: var(--white);
+  border-radius: 50%;
+  animation: spin .65s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Divisor horizontal ─────────────────────────── */
+.divisor-h {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin: 1.35rem 0 1rem;
+  color: var(--muted);
+  font-size: .78rem;
+}
+.divisor-h::before,
+.divisor-h::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(136,128,192,.2);
+}
+
+/* ── Footer ─────────────────────────────────────── */
+.form-footer {
+  text-align: center;
+  font-size: .85rem;
+  color: var(--muted);
+}
+
+.link-cadastro {
+  color: var(--gold);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color .2s;
+}
+.link-cadastro:hover { color: var(--gold-light); }
+
+/* ── Responsivo ─────────────────────────────────── */
+@media (max-width: 680px) {
+  .login-card {
+    grid-template-columns: 1fr;
+    max-width: 420px;
+  }
+
+  .login-lado-logo {
+    padding: 2rem 1.75rem 1.75rem;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo-circulo { width: 130px; height: 130px; }
+  .logo-nome    { font-size: 1.65rem; }
+  .features-list { display: none; }
+  .logo-slogan  { margin-bottom: .5rem; }
+  .divisor-v    { display: none; }
+
+  .login-lado-form { padding: 1.75rem 1.5rem 2rem; }
+  .form-header h1  { font-size: 1.6rem; }
+}
