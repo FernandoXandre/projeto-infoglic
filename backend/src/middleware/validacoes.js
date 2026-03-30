@@ -1,5 +1,6 @@
 const { body, validationResult } = require('express-validator');
 
+// RF01 – Validação de cadastro
 const validarCadastroCliente = [
   body('nome')
     .trim()
@@ -48,6 +49,49 @@ const validarCadastroCliente = [
       if (idade > 120) throw new Error('Data de nascimento inválida');
       return true;
     }),
+
+  // RF01 – tipo de diabetes
+  body('tipoDiabetes')
+    .notEmpty().withMessage('Tipo de diabetes é obrigatório')
+    .isIn(['Tipo 1', 'Tipo 2', 'Gestacional', 'Outros'])
+    .withMessage('Tipo de diabetes inválido'),
+];
+
+// RF02 – Validação de login
+const validarLogin = [
+  body('email')
+    .trim()
+    .notEmpty().withMessage('E-mail é obrigatório')
+    .isEmail().withMessage('Formato de e-mail inválido')
+    .normalizeEmail(),
+
+  body('senha')
+    .notEmpty().withMessage('Senha é obrigatória'),
+];
+
+// RF03 – Validação de recuperação de senha
+const validarRecuperarSenha = [
+  body('email')
+    .trim()
+    .notEmpty().withMessage('E-mail é obrigatório')
+    .isEmail().withMessage('Formato de e-mail inválido')
+    .normalizeEmail(),
+];
+
+// RF03 – Validação de redefinição de senha
+const validarRedefinirSenha = [
+  body('senha')
+    .notEmpty().withMessage('Senha é obrigatória')
+    .isLength({ min: 6 }).withMessage('Senha deve ter pelo menos 6 caracteres')
+    .matches(/[A-Z]/).withMessage('Senha deve conter ao menos uma letra maiúscula')
+    .matches(/\d/).withMessage('Senha deve conter ao menos um número'),
+
+  body('confirmarSenha')
+    .notEmpty().withMessage('Confirmação de senha é obrigatória')
+    .custom((value, { req }) => {
+      if (value !== req.body.senha) throw new Error('As senhas não coincidem');
+      return true;
+    }),
 ];
 
 const checarErros = (req, res, next) => {
@@ -62,4 +106,4 @@ const checarErros = (req, res, next) => {
   next();
 };
 
-module.exports = { validarCadastroCliente, checarErros };
+module.exports = { validarCadastroCliente, validarLogin, validarRecuperarSenha, validarRedefinirSenha, checarErros };

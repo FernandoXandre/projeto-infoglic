@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useCadastroCliente } from '../hooks/useCadastroCliente';
 import './CadastroCliente.css';
 
-const CampoInput = ({ label, nome, tipo = 'text', placeholder, register, erros, rules, mask }) => {
+const CampoInput = ({ label, nome, tipo = 'text', placeholder, register, erros, rules }) => {
   const temErro = !!erros[nome];
   return (
     <div className={`campo-grupo ${temErro ? 'campo-erro' : ''}`}>
@@ -15,6 +15,22 @@ const CampoInput = ({ label, nome, tipo = 'text', placeholder, register, erros, 
         autoComplete="off"
         {...register(nome, rules)}
       />
+      {temErro && <span className="mensagem-erro">{erros[nome]?.message}</span>}
+    </div>
+  );
+};
+
+const CampoSelect = ({ label, nome, opcoes, register, erros, rules }) => {
+  const temErro = !!erros[nome];
+  return (
+    <div className={`campo-grupo ${temErro ? 'campo-erro' : ''}`}>
+      <label htmlFor={nome}>{label}</label>
+      <select id={nome} {...register(nome, rules)}>
+        <option value="">Selecione...</option>
+        {opcoes.map((op) => (
+          <option key={op} value={op}>{op}</option>
+        ))}
+      </select>
       {temErro && <span className="mensagem-erro">{erros[nome]?.message}</span>}
     </div>
   );
@@ -77,7 +93,7 @@ export default function CadastroCliente() {
               </div>
               <div>
                 <h2 className="sucesso-titulo">Cadastro realizado!</h2>
-                <p className="sucesso-sub">Dados persistidos no MongoDB com sucesso</p>
+                <p className="sucesso-sub">Verifique seu e-mail para ativar a conta</p>
               </div>
             </div>
 
@@ -110,6 +126,14 @@ export default function CadastroCliente() {
               <div className="db-campo">
                 <span className="db-key">dataNascimento</span>
                 <span className="db-value">{nascFormatado}</span>
+              </div>
+              <div className="db-campo">
+                <span className="db-key">tipoDiabetes</span>
+                <span className="db-value">{clienteCadastrado.tipoDiabetes}</span>
+              </div>
+              <div className="db-campo">
+                <span className="db-key">emailVerificado</span>
+                <span className="db-value db-bool">false</span>
               </div>
               <div className="db-campo">
                 <span className="db-key">ativo</span>
@@ -213,8 +237,17 @@ export default function CadastroCliente() {
                   },
                 }}
               />
+              {/* RF01 – tipo de diabetes */}
+              <CampoSelect
+                label="Tipo de diabetes"
+                nome="tipoDiabetes"
+                opcoes={['Tipo 1', 'Tipo 2', 'Gestacional', 'Outros']}
+                register={register}
+                erros={errors}
+                rules={{ required: 'Tipo de diabetes é obrigatório' }}
+              />
               <button type="button" className="btn-primario" onClick={async () => {
-                const campos = ['nome', 'cpf', 'dataNascimento'];
+                const campos = ['nome', 'cpf', 'dataNascimento', 'tipoDiabetes'];
                 const validos = await Promise.all(campos.map(c => !errors[c]));
                 if (campos.every((_, i) => validos[i])) setStep(2);
               }}>

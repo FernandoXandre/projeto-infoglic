@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/database');
 const clienteRoutes = require('./routes/clienteRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -20,6 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Rotas
 app.use('/api/clientes', clienteRoutes);
+app.use('/api/auth', authRoutes);
 
 // Rota de health check
 app.get('/api/health', (req, res) => {

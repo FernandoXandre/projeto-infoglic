@@ -1,4 +1,6 @@
+const crypto = require('crypto');
 const Cliente = require('../models/Cliente');
+const { enviarEmail } = require('../config/email');
 
 // Utilitário de log colorido no terminal
 const logCadastro = (cliente) => {
@@ -23,7 +25,7 @@ const logCadastro = (cliente) => {
 // RF01 - Cadastro de Cliente
 const cadastrarCliente = async (req, res) => {
   try {
-    const { nome, email, senha, telefone, cpf, dataNascimento } = req.body;
+    const { nome, email, senha, telefone, cpf, dataNascimento, tipoDiabetes } = req.body;
 
     // Verificar duplicatas
     const emailExistente = await Cliente.findOne({ email });
@@ -44,6 +46,18 @@ const cadastrarCliente = async (req, res) => {
       });
     }
 
+    const telefoneExistente = await Cliente.findOne({ telefone });
+    if (telefoneExistente) {
+      return res.status(409).json({
+        sucesso: false,
+        mensagem: 'Telefone já cadastrado no sistema.',
+        erros: [{ campo: 'telefone', mensagem: 'Este telefone já está em uso' }],
+      });
+    }
+
+    // RF01 – token de ativação por e-mail
+    const tokenAtivacao = crypto.randomBytes(32).toString('hex');
+
     const novoCliente = await Cliente.create({
       nome,
       email,
@@ -51,14 +65,44 @@ const cadastrarCliente = async (req, res) => {
       telefone,
       cpf,
       dataNascimento,
+      tipoDiabetes,
+      tokenAtivacao,
+      tokenAtivacaoExpira: Date.now() + 24 * 60 * 60 * 1000, // 24 horas
     });
 
     // Log detalhado no terminal
     logCadastro(novoCliente);
 
-    return res.status(201).json({
+    // RF01 – envio do e-mail de ativação via Ethereal
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const linkAtivacao = `${frontendUrl}/api/auth/ativar/${tokenAtivacao}`;
+
+    let previewUrl = null;
+    try {
+      const resultado = await enviarEmail({
+        para: novoCliente.email,
+        assunto: 'InfoGlic – Ative sua conta',
+        html: `
+          <div style="font-family:sans-serif;max-width:480px;margin:auto">
+            <h2 style="color:#2563eb">InfoGlic</h2>
+            <p>Olá, <strong>${novoCliente.nome}</strong>! Bem-vindo ao InfoGlic.</p>
+            <p>Clique no botão abaixo para ativar sua conta. O link expira em <strong>24 horas</strong>.</p>
+            <a href="${linkAtivacao}"
+               style="display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;
+                      border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0">
+              Ativar minha conta
+            </a>
+          </div>
+        `,
+      });
+      previewUrl = resultado.previewUrl;
+    } catch (emailError) {
+      console.error('\x1b[33m⚠ Falha ao enviar e-mail de ativação:\x1b[0m', emailError.message);
+    }
+
+    const resposta = {
       sucesso: true,
-      mensagem: 'Cliente cadastrado com sucesso!',
+      mensagem: 'Cadastro realizado! Verifique seu e-mail para ativar a conta.',
       dados: {
         _id:            novoCliente._id,
         nome:           novoCliente.nome,
@@ -66,10 +110,19 @@ const cadastrarCliente = async (req, res) => {
         telefone:       novoCliente.telefone,
         cpf:            novoCliente.cpf,
         dataNascimento: novoCliente.dataNascimento,
+        tipoDiabetes:   novoCliente.tipoDiabetes,
+        role:           novoCliente.role,
+        emailVerificado: novoCliente.emailVerificado,
         ativo:          novoCliente.ativo,
         createdAt:      novoCliente.createdAt,
       },
-    });
+    };
+
+    if (process.env.NODE_ENV !== 'production' && previewUrl) {
+      resposta.emailPreviewUrl = previewUrl;
+    }
+
+    return res.status(201).json(resposta);
   } catch (error) {
     console.error('\x1b[31m❌ Erro ao cadastrar cliente:\x1b[0m', error.message);
     return res.status(500).json({

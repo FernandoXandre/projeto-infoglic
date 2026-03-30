@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './Login.css';
 import logoInfoglic from '../assets/imagemInfoGlic.jpeg';
+import { login as loginService } from '../services/authService';
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', senha: '' });
@@ -20,11 +21,18 @@ export default function Login() {
       return;
     }
     setLoading(true);
-    // Simulação de chamada à API
-    setTimeout(() => {
+    try {
+      const resposta = await loginService(form);
+      localStorage.setItem('token', resposta.token);
+      localStorage.setItem('usuario', JSON.stringify(resposta.dados));
+      // Redireciona para o dashboard (a ser implementado)
+      window.location.href = '/dashboard';
+    } catch (error) {
+      const mensagem = error.response?.data?.mensagem || 'E-mail ou senha incorretos.';
+      setErro(mensagem);
+    } finally {
       setLoading(false);
-      setErro('E-mail ou senha incorretos.');
-    }, 1500);
+    }
   };
 
   return (

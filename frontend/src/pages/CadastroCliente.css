@@ -214,6 +214,23 @@ body {
   transition: var(--transicao);
   outline: none;
 }
+.campo-grupo select {
+  padding: 0.72rem 0.95rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.93rem;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: var(--navy);
+  background: var(--navy-light);
+  transition: var(--transicao);
+  outline: none;
+  cursor: pointer;
+}
+.campo-grupo select:focus {
+  border-color: var(--navy-mid);
+  background: #fff;
+}
+.campo-grupo.campo-erro select { border-color: var(--red); background: #fff3f3; }
 .campo-grupo input::placeholder { color: #9997be; }
 .campo-grupo input:focus {
   border-color: var(--navy-mid);

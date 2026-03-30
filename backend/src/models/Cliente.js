@@ -22,11 +22,12 @@ const clienteSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Senha é obrigatória'],
       minlength: [6, 'Senha deve ter pelo menos 6 caracteres'],
-      select: false, // não retorna a senha nas queries por padrão
+      select: false,
     },
     telefone: {
       type: String,
       required: [true, 'Telefone é obrigatório'],
+      unique: true,
       trim: true,
       match: [/^(\(?\d{2}\)?\s?)(\d{4,5}-?\d{4})$/, 'Formato de telefone inválido'],
     },
@@ -41,16 +42,57 @@ const clienteSchema = new mongoose.Schema(
       type: Date,
       required: [true, 'Data de nascimento é obrigatória'],
     },
+    // RF01 – tipo de diabetes do paciente
+    tipoDiabetes: {
+      type: String,
+      required: [true, 'Tipo de diabetes é obrigatório'],
+      enum: {
+        values: ['Tipo 1', 'Tipo 2', 'Gestacional', 'Outros'],
+        message: 'Tipo de diabetes inválido',
+      },
+    },
+    // Tipo de usuário para controle de acesso futuro (RF01 – nota)
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
+    },
+    // RF01 – confirmação de conta por e-mail (Ethereal)
+    emailVerificado: {
+      type: Boolean,
+      default: false,
+    },
+    tokenAtivacao: {
+      type: String,
+      select: false,
+    },
+    tokenAtivacaoExpira: {
+      type: Date,
+      select: false,
+    },
+    // RF03 – recuperação de senha
+    tokenResetSenha: {
+      type: String,
+      select: false,
+    },
+    tokenResetSenhaExpira: {
+      type: Date,
+      select: false,
+    },
     ativo: {
       type: Boolean,
       default: true,
     },
   },
   {
-    timestamps: true, // cria createdAt e updatedAt automaticamente
+    timestamps: true,
     toJSON: {
       transform(doc, ret) {
-        delete ret.senha; // garante que a senha nunca saia no JSON
+        delete ret.senha;
+        delete ret.tokenAtivacao;
+        delete ret.tokenAtivacaoExpira;
+        delete ret.tokenResetSenha;
+        delete ret.tokenResetSenhaExpira;
         return ret;
       },
     },
