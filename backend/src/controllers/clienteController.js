@@ -74,8 +74,9 @@ const cadastrarCliente = async (req, res) => {
     logCadastro(novoCliente);
 
     // RF01 – envio do e-mail de ativação via Ethereal
+    // O link aponta para a página React /ativar/:token, que chama o backend
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const linkAtivacao = `${frontendUrl}/api/auth/ativar/${tokenAtivacao}`;
+    const linkAtivacao = `${frontendUrl}/ativar/${tokenAtivacao}`;
 
     let previewUrl = null;
     try {

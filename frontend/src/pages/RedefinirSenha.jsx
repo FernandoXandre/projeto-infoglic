@@ -53,8 +53,8 @@ export default function RedefinirSenha() {
       <div className="orb orb-2" />
       <div className="orb orb-3" />
 
-      <div className="login-card" style={{ maxWidth: 480, margin: 'auto' }}>
-        <div className="login-lado-form" style={{ width: '100%' }}>
+      <div className="login-card" style={{ maxWidth: 460, gridTemplateColumns: '1fr' }}>
+        <div className="login-lado-form">
           <div className="form-header">
             <h1>Nova senha</h1>
             <p>Crie uma nova senha para sua conta</p>

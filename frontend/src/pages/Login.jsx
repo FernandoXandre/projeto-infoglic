@@ -48,8 +48,8 @@ export default function Login() {
           <div className="logo-circulo">
             <img src={logoInfoglic} alt="Infoglic" className="logo-img" />
           </div>
-          <h2 className="logo-nome">Infoglic</h2>
-          <p className="logo-slogan">Monitoramento glicêmico inteligente</p>
+          <h2 className="logo-nome">InfoGlic</h2>
+          <p className="logo-slogan">Sua agenda glicêmica!</p>
 
           <div className="divisor-v" />
 
@@ -79,7 +79,6 @@ export default function Login() {
             <div className="campo-grupo">
               <label htmlFor="email">E-mail</label>
               <div className="input-wrapper">
-                <span className="input-icon">✉</span>
                 <input
                   id="email"
                   name="email"
@@ -98,7 +97,6 @@ export default function Login() {
                 <a href="/recuperar-senha" className="link-esqueci">Esqueci minha senha</a>
               </div>
               <div className="input-wrapper">
-                <span className="input-icon">🔑</span>
                 <input
                   id="senha"
                   name="senha"

@@ -4,16 +4,20 @@ import CadastroCliente from './pages/CadastroCliente';
 import Login from './pages/Login';
 import RecuperarSenha from './pages/RecuperarSenha';
 import RedefinirSenha from './pages/RedefinirSenha';
+import Dashboard from './pages/Dashboard';
+import AtivarConta from './pages/AtivarConta';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login"              element={<Login />} />
-        <Route path="/cadastro"           element={<CadastroCliente />} />
-        <Route path="/recuperar-senha"    element={<RecuperarSenha />} />
+        <Route path="/login"                  element={<Login />} />
+        <Route path="/cadastro"               element={<CadastroCliente />} />
+        <Route path="/recuperar-senha"        element={<RecuperarSenha />} />
         <Route path="/redefinir-senha/:token" element={<RedefinirSenha />} />
-        <Route path="/"                   element={<Navigate to="/login" replace />} />
+        <Route path="/ativar/:token"          element={<AtivarConta />} />
+        <Route path="/dashboard"              element={<Dashboard />} />
+        <Route path="/"                       element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
   );

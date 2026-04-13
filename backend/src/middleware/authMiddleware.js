@@ -28,4 +28,12 @@ const apenasAdmin = (req, res, next) => {
   next();
 };
 
-module.exports = { proteger, apenasAdmin };
+// RF04 – Garante que apenas usuários padrão possam registrar testes glicêmicos
+const apenasUsuarioPadrao = (req, res, next) => {
+  if (req.usuario?.role !== 'user') {
+    return res.status(403).json({ sucesso: false, mensagem: 'Apenas usuários padrão podem registrar testes glicêmicos.' });
+  }
+  next();
+};
+
+module.exports = { proteger, apenasAdmin, apenasUsuarioPadrao };
