@@ -652,6 +652,120 @@
   margin-top: -.15rem;
 }
 
+/* ── RF12: Legenda de eventos ────────────────────────── */
+.leg-evento {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  font-size: .74rem;
+  font-weight: 500;
+  margin-right: .75rem;
+  margin-top: .6rem;
+}
+
+/* ── RF07: Lista de medicamentos (dashboard) ─────────── */
+.med-lista { display: flex; flex-direction: column; gap: .9rem; }
+
+.med-card {
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+}
+
+.med-cabecalho { display: flex; align-items: center; justify-content: space-between; margin-bottom: .75rem; }
+.med-info { display: flex; flex-direction: column; gap: .15rem; }
+.med-nome { font-weight: 600; font-size: .96rem; color: var(--white); }
+.med-dosagem { font-size: .78rem; color: var(--muted); }
+
+.med-tipo-badge { font-size: .72rem; font-weight: 700; letter-spacing: .05em; padding: .22rem .65rem; border-radius: 999px; }
+.med-tipo-insulina { background: rgba(59,130,246,0.18); color: #7eb3ff; border: 1px solid rgba(59,130,246,0.35); }
+.med-tipo-oral     { background: rgba(74,222,128,0.14); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+.med-tipo-outro    { background: rgba(201,160,48,0.14); color: var(--gold); border: 1px solid rgba(201,160,48,0.3); }
+
+.med-horarios { display: flex; flex-direction: column; gap: .55rem; }
+
+.slot-dose { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+
+.slot-hora {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gold-light);
+  min-width: 3rem;
+}
+
+.slot-status { font-size: .82rem; font-weight: 600; padding: .22rem .7rem; border-radius: 999px; }
+.slot-tomado { background: rgba(74,222,128,0.14);  color: #4ade80; }
+.slot-pulado { background: rgba(136,128,192,0.14); color: var(--muted); }
+.slot-adiado { background: rgba(249,115,22,0.14);  color: #fb923c; }
+.slot-local  { font-weight: 400; opacity: .8; }
+
+.slot-acoes { display: flex; gap: .4rem; flex-wrap: wrap; }
+
+.btn-dose { padding: .28rem .75rem; border-radius: 7px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: .78rem; font-weight: 600; cursor: pointer; transition: all .18s; border: 1px solid transparent; }
+.btn-tomado { background: rgba(74,222,128,0.15); border-color: rgba(74,222,128,0.35); color: #4ade80; }
+.btn-tomado:hover { background: rgba(74,222,128,0.28); border-color: rgba(74,222,128,0.6); }
+.btn-pulado { background: rgba(136,128,192,0.13); border-color: rgba(136,128,192,0.3); color: var(--muted); }
+.btn-pulado:hover { background: rgba(136,128,192,0.22); border-color: rgba(136,128,192,0.5); }
+.btn-adiado { background: rgba(249,115,22,0.12); border-color: rgba(249,115,22,0.3); color: #fb923c; }
+.btn-adiado:hover { background: rgba(249,115,22,0.22); border-color: rgba(249,115,22,0.5); }
+
+.slot-confirmando { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+
+.select-local {
+  padding: .3rem .6rem;
+  background: rgba(255,255,255,0.92);
+  border: 1.5px solid var(--border-input);
+  border-radius: 8px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .82rem;
+  color: var(--indigo-deep);
+  cursor: pointer;
+}
+
+.rodizio-dica { font-size: .75rem; color: var(--muted); font-style: italic; }
+
+/* ── RF07: Modal de medicamentos ─────────────────────── */
+.modal-box-med { max-width: 520px; }
+
+.med-lista-modal { display: flex; flex-direction: column; gap: .65rem; max-height: 280px; overflow-y: auto; padding-right: .25rem; }
+
+.med-item-modal { display: flex; align-items: center; justify-content: space-between; gap: .75rem; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: .75rem 1rem; }
+
+.med-item-info { display: flex; flex-direction: column; gap: .15rem; flex: 1; }
+.med-horarios-tag { font-size: .73rem; color: var(--gold); letter-spacing: .02em; }
+.med-item-acoes { display: flex; gap: .4rem; flex-shrink: 0; }
+
+.horarios-med-lista { display: flex; flex-direction: column; gap: .5rem; }
+.horario-med-row { display: flex; align-items: center; gap: .5rem; }
+.horario-med-row input[type="time"] { width: auto; flex: 1; }
+
+.btn-remove-horario { background: rgba(192,30,44,0.14); border: 1px solid rgba(192,30,44,0.3); border-radius: 7px; color: #ff8080; font-size: 1.1rem; line-height: 1; cursor: pointer; padding: .28rem .6rem; transition: all .18s; }
+.btn-remove-horario:hover { background: rgba(192,30,44,0.28); border-color: rgba(192,30,44,0.55); }
+
+.btn-add-horario { background: none; border: 1px dashed rgba(201,160,48,0.4); border-radius: 8px; color: var(--gold); font-family: 'Plus Jakarta Sans', sans-serif; font-size: .82rem; font-weight: 600; cursor: pointer; padding: .4rem; transition: all .18s; }
+.btn-add-horario:hover { background: rgba(201,160,48,0.08); border-color: rgba(201,160,48,0.7); }
+
+/* ── RF12: Formulário de eventos ─────────────────────── */
+.evento-form { display: flex; flex-direction: column; gap: 1rem; }
+
+.tags-grid { display: flex; flex-wrap: wrap; gap: .65rem; }
+
+.tag-btn { display: flex; align-items: center; gap: .45rem; padding: .45rem 1rem; background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,255,255,0.12); border-radius: 999px; color: rgba(255,255,255,0.7); font-family: 'Plus Jakarta Sans', sans-serif; font-size: .84rem; font-weight: 500; cursor: pointer; transition: all .2s; }
+.tag-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.25); color: var(--white); }
+.tag-btn.tag-ativa { font-weight: 700; }
+
+.tag-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.campo-obs-evento { max-width: 100%; }
+
+.evento-rodape { display: flex; align-items: center; justify-content: flex-end; gap: 1rem; flex-wrap: wrap; }
+.evento-salvo-label { font-size: .8rem; color: var(--muted); font-style: italic; flex: 1; }
+.btn-salvar-evento { min-width: 160px; }
+
+.btn-remover-evento { padding: .38rem .85rem; background: rgba(192,30,44,0.12); border: 1px solid rgba(192,30,44,0.3); border-radius: 8px; color: #ff8080; font-family: 'Plus Jakarta Sans', sans-serif; font-size: .8rem; font-weight: 600; cursor: pointer; transition: all .18s; }
+.btn-remover-evento:hover { background: rgba(192,30,44,0.25); border-color: rgba(192,30,44,0.55); }
+
 /* ── Responsivo ──────────────────────────────────── */
 @media (max-width: 768px) {
   .dash-navbar { padding: .75rem 1.1rem; }
@@ -672,4 +786,8 @@
   .horarios-grid { grid-template-columns: 1fr; }
   .nav-direita { gap: .75rem; }
   .btn-horarios { font-size: .76rem; padding: .38rem .7rem; }
+
+  .tags-grid { gap: .45rem; }
+  .tag-btn { font-size: .78rem; padding: .38rem .8rem; }
+  .slot-dose { flex-direction: column; align-items: flex-start; gap: .4rem; }
 }

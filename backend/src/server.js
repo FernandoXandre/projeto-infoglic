@@ -5,6 +5,8 @@ const connectDB = require('./config/database');
 const clienteRoutes = require('./routes/clienteRoutes');
 const authRoutes = require('./routes/authRoutes');
 const registroRoutes = require('./routes/registroRoutes');
+const medicamentoRoutes = require('./routes/medicamentoRoutes');
+const eventoRoutes = require('./routes/eventoRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -24,6 +26,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/clientes', clienteRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/registros', registroRoutes);
+app.use('/api/medicamentos', medicamentoRoutes);
+app.use('/api/eventos', eventoRoutes);
 
 // Rota de health check
 app.get('/api/health', (req, res) => {
