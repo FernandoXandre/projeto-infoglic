@@ -53,7 +53,7 @@ const validarCPF = (cpf) => {
 };
 
 export default function CadastroCliente() {
-  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm({ mode: 'onBlur' });
+  const { register, handleSubmit, watch, reset, trigger, formState: { errors } } = useForm({ mode: 'onBlur' });
   const { loading, sucesso, erro, errosCampos, clienteCadastrado, cadastrar, resetar } = useCadastroCliente();
   const [step, setStep] = useState(1);
   const senha = watch('senha');
@@ -247,9 +247,8 @@ export default function CadastroCliente() {
                 rules={{ required: 'Tipo de diabetes é obrigatório' }}
               />
               <button type="button" className="btn-primario" onClick={async () => {
-                const campos = ['nome', 'cpf', 'dataNascimento', 'tipoDiabetes'];
-                const validos = await Promise.all(campos.map(c => !errors[c]));
-                if (campos.every((_, i) => validos[i])) setStep(2);
+                const valido = await trigger(['nome', 'cpf', 'dataNascimento', 'tipoDiabetes']);
+                if (valido) setStep(2);
               }}>
                 Continuar →
               </button>
@@ -285,7 +284,10 @@ export default function CadastroCliente() {
               />
               <div className="botoes-navegacao">
                 <button type="button" className="btn-secundario" onClick={() => setStep(1)}>← Voltar</button>
-                <button type="button" className="btn-primario" onClick={() => setStep(3)}>Continuar →</button>
+                <button type="button" className="btn-primario" onClick={async () => {
+                  const valido = await trigger(['email', 'telefone']);
+                  if (valido) setStep(3);
+                }}>Continuar →</button>
               </div>
             </div>
           )}

@@ -1,141 +1,114 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Infoglic palette – extraído da imagem */
-  --navy:        #1a1650;
-  --navy-mid:    #2a2280;
-  --navy-light:  #e8e7f6;
-  --red:         #bf2027;
-  --red-light:   #d94040;
-  --gold:        #c9a227;
-  --gold-light:  #e0b93a;
-  --gold-pale:   #fdf6e3;
-  --white:       #ffffff;
-  --slate:       #4a4870;
-  --border:      #d8d5ee;
-  --sombra:      0 10px 40px rgba(26, 22, 80, 0.16);
-  --radius:      16px;
-  --radius-sm:   9px;
-  --transicao:   all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --primary:        #1d4ed8;
+  --primary-hover:  #1e40af;
+  --primary-light:  #eff6ff;
+  --primary-border: #bfdbfe;
+  --bg:             #f0f4f8;
+  --white:          #ffffff;
+  --text:           #1e293b;
+  --text-body:      #475569;
+  --text-muted:     #94a3b8;
+  --border:         #e2e8f0;
+  --border-input:   #cbd5e1;
+  --success:        #16a34a;
+  --success-bg:     #f0fdf4;
+  --success-border: #bbf7d0;
+  --danger:         #dc2626;
+  --danger-bg:      #fef2f2;
+  --danger-border:  #fecaca;
+  --gold:           #d97706;
+  --shadow-lg:      0 10px 40px rgba(0,0,0,0.1), 0 4px 12px rgba(0,0,0,0.06);
+  --radius:         12px;
+  --radius-sm:      8px;
+  --transition:     all 0.2s ease;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  background-color: var(--navy);
-  color: var(--navy);
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
 }
 
-/* ── Layout ─────────────────────────────────────── */
+/* ── Layout ──────────────────────────────────────── */
 .cadastro-wrapper {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2rem 1rem;
-  background:
-    radial-gradient(ellipse at 70% 5%,  rgba(201, 162, 39, 0.12) 0%, transparent 50%),
-    radial-gradient(ellipse at 15% 95%, rgba(191, 32, 39, 0.14)  0%, transparent 45%),
-    radial-gradient(ellipse at 50% 50%, rgba(42, 34, 128, 0.5)   0%, transparent 80%),
-    var(--navy);
+  background: var(--bg);
 }
 
 .cadastro-card {
   background: var(--white);
-  border-radius: 24px;
-  box-shadow: var(--sombra);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  border-radius: 16px;
   width: 100%;
   max-width: 480px;
-  padding: 0;
   overflow: hidden;
-  animation: slideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
-  border: 1px solid rgba(201, 162, 39, 0.2);
+  animation: slideUp 0.4s ease both;
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(28px); }
+  from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Header com faixa navy ──────────────────────── */
+/* ── Header ──────────────────────────────────────── */
 .cadastro-header {
-  background: var(--navy);
+  background: var(--primary);
   text-align: center;
   padding: 2rem 2rem 1.75rem;
-  position: relative;
-  overflow: hidden;
-}
-
-.cadastro-header::before {
-  content: '';
-  position: absolute;
-  top: -40px; right: -40px;
-  width: 160px; height: 160px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(201,162,39,.18) 0%, transparent 70%);
-}
-
-.cadastro-header::after {
-  content: '';
-  position: absolute;
-  bottom: -30px; left: -30px;
-  width: 120px; height: 120px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(191,32,39,.15) 0%, transparent 70%);
 }
 
 .logo {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 1.1rem;
-  position: relative;
-  z-index: 1;
+  margin-bottom: 1rem;
 }
 
 .logo-badge {
-  width: 36px; height: 36px;
-  background: var(--red);
-  border-radius: 10px;
+  width: 34px; height: 34px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
   font-size: 1rem;
-  box-shadow: 0 2px 8px rgba(191, 32, 39, 0.4);
 }
 
 .logo-texto {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 700;
-  color: var(--gold);
-  letter-spacing: 0.04em;
-  text-shadow: 0 1px 6px rgba(0,0,0,.3);
+  color: #ffffff;
+  letter-spacing: .02em;
 }
 
 .cadastro-header h1 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 1.45rem;
-  font-weight: 600;
-  color: var(--white);
+  font-weight: 700;
+  color: #ffffff;
   line-height: 1.25;
-  margin-bottom: 0.35rem;
-  position: relative; z-index: 1;
+  margin-bottom: .3rem;
 }
 
 .cadastro-header p {
-  font-size: 0.85rem;
-  color: rgba(255,255,255,0.6);
-  font-weight: 300;
-  position: relative; z-index: 1;
+  font-size: .84rem;
+  color: rgba(255,255,255,0.75);
+  font-weight: 400;
 }
 
-/* ── Corpo do card ──────────────────────────────── */
+/* ── Corpo ───────────────────────────────────────── */
 .card-body {
-  padding: 1.75rem 2rem 1.5rem;
-  color: #111;
+  padding: 1.75rem 2rem;
+  color: var(--text);
 }
 
-/* ── Steps ──────────────────────────────────────── */
+/* ── Steps ───────────────────────────────────────── */
 .steps-indicador {
   display: flex;
   align-items: center;
@@ -150,198 +123,183 @@ body {
   align-items: center;
   gap: 4px;
 }
+
 .step span {
   width: 32px; height: 32px;
   border-radius: 50%;
   border: 2px solid var(--border);
   display: flex; align-items: center; justify-content: center;
-  font-size: 0.78rem; font-weight: 600;
-  color: #aaa;
-  transition: var(--transicao);
+  font-size: .78rem; font-weight: 700;
+  color: var(--text-muted);
   background: var(--white);
+  transition: var(--transition);
 }
+
 .step label {
-  font-size: 0.65rem;
-  color: #555;
+  font-size: .65rem;
+  color: var(--text-muted);
   font-weight: 500;
-  letter-spacing: 0.05em;
+  letter-spacing: .04em;
   text-transform: uppercase;
-  transition: var(--transicao);
+  transition: var(--transition);
 }
-.step.ativo span    { border-color: var(--navy-mid); background: var(--navy-mid); color: var(--white); }
-.step.ativo label   { color: var(--navy-mid); }
-.step.concluido span  { border-color: var(--gold); background: var(--gold); color: var(--white); }
-.step.concluido label { color: var(--gold); }
+
+.step.ativo span  { border-color: var(--primary); background: var(--primary); color: var(--white); }
+.step.ativo label { color: var(--primary); }
+.step.concluido span  { border-color: var(--success); background: var(--success); color: var(--white); }
+.step.concluido label { color: var(--success); }
 
 .step-linha {
-  flex: 1; height: 2px;
+  flex: 1;
+  height: 2px;
   background: var(--border);
   margin: 0 6px;
   margin-bottom: 18px;
   min-width: 40px;
-  transition: background 0.3s;
 }
 
-/* ── Step Content ───────────────────────────────── */
+/* ── Step Content ────────────────────────────────── */
 .step-conteudo {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  animation: fadeIn 0.3s ease both;
+  animation: fadeIn .25s ease both;
 }
-@keyframes fadeIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: translateX(0); } }
 
-/* ── Campos ─────────────────────────────────────── */
+/* ── Campos ──────────────────────────────────────── */
 .campo-grupo {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
-.campo-grupo label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #111;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-}
-.campo-grupo input {
-  padding: 0.72rem 0.95rem;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 0.93rem;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  color: #111;
-  background: var(--navy-light);
-  transition: var(--transicao);
-  outline: none;
-}
-.campo-grupo select {
-  padding: 0.72rem 0.95rem;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 0.93rem;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  color: #111;
-  background: var(--navy-light);
-  transition: var(--transicao);
-  outline: none;
-  cursor: pointer;
-}
-.campo-grupo select:focus {
-  border-color: var(--navy-mid);
-  background: #fff;
-}
-.campo-grupo.campo-erro select { border-color: var(--red); background: #fff3f3; }
-.campo-grupo input::placeholder { color: #9997be; }
-.campo-grupo input:focus {
-  border-color: var(--navy-mid);
-  background: var(--white);
-  box-shadow: 0 0 0 3px rgba(42, 34, 128, 0.1);
-}
-.campo-grupo.campo-erro input { border-color: var(--red); background: #fff3f3; }
-.mensagem-erro { font-size: 0.76rem; color: var(--red); font-weight: 500; }
 
-/* ── Botões ─────────────────────────────────────── */
+.campo-grupo label {
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--text-body);
+}
+
+.campo-grupo input,
+.campo-grupo select {
+  padding: .75rem .95rem;
+  border: 1.5px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  font-size: .93rem;
+  font-family: 'Inter', sans-serif;
+  color: var(--text);
+  background: var(--white);
+  transition: var(--transition);
+  outline: none;
+}
+
+.campo-grupo input::placeholder { color: var(--text-muted); }
+
+.campo-grupo input:focus,
+.campo-grupo select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(29,78,216,0.1);
+}
+
+.campo-grupo.campo-erro input,
+.campo-grupo.campo-erro select {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.mensagem-erro { font-size: .76rem; color: var(--danger); font-weight: 500; }
+
+/* ── Botões ──────────────────────────────────────── */
 .botoes-navegacao {
   display: grid;
   grid-template-columns: 1fr 2fr;
-  gap: 0.7rem;
-  margin-top: 0.25rem;
+  gap: .7rem;
+  margin-top: .25rem;
 }
 
 .btn-primario {
-  padding: 0.82rem 1.5rem;
-  background: var(--navy-mid);
+  padding: .82rem 1.5rem;
+  background: var(--primary);
   color: var(--white);
   border: none;
   border-radius: var(--radius-sm);
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.92rem;
+  font-family: 'Inter', sans-serif;
+  font-size: .93rem;
   font-weight: 600;
   cursor: pointer;
-  transition: var(--transicao);
+  transition: var(--transition);
   display: flex;
   align-items: center; justify-content: center;
   gap: 8px;
   width: 100%;
-  position: relative;
-  overflow: hidden;
-}
-.btn-primario::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(201,162,39,.2) 0%, transparent 60%);
-  pointer-events: none;
 }
 .btn-primario:hover:not(:disabled) {
-  background: var(--navy);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(26, 22, 80, 0.35);
+  background: var(--primary-hover);
+  box-shadow: 0 4px 16px rgba(29,78,216,0.3);
 }
-.btn-primario:active  { transform: translateY(0); }
-.btn-primario:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-primario:active { transform: scale(.99); }
+.btn-primario:disabled { opacity: .65; cursor: not-allowed; }
 
 .btn-secundario {
-  padding: 0.82rem 1rem;
-  background: transparent;
-  color: var(--slate);
-  border: 1.5px solid var(--border);
+  padding: .8rem 1rem;
+  background: var(--white);
+  color: var(--text-body);
+  border: 1.5px solid var(--border-input);
   border-radius: var(--radius-sm);
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.88rem;
+  font-family: 'Inter', sans-serif;
+  font-size: .88rem;
   font-weight: 500;
   cursor: pointer;
-  transition: var(--transicao);
+  transition: var(--transition);
 }
-.btn-secundario:hover { background: var(--navy-light); border-color: #bab8e0; }
+.btn-secundario:hover { background: var(--bg); border-color: var(--text-muted); color: var(--text); }
 
-/* ── Spinner ────────────────────────────────────── */
+/* ── Spinner ─────────────────────────────────────── */
 .spinner {
   display: inline-block;
   width: 17px; height: 17px;
   border: 2px solid rgba(255,255,255,.35);
-  border-top-color: var(--white);
+  border-top-color: #fff;
   border-radius: 50%;
-  animation: spin 0.7s linear infinite;
+  animation: spin .7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Alertas ────────────────────────────────────── */
+/* ── Alertas ─────────────────────────────────────── */
 .alerta-erro {
-  background: #fff2f2;
-  border: 1px solid #f5b8b8;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
   border-radius: var(--radius-sm);
-  padding: 0.7rem 1rem;
-  font-size: 0.86rem;
-  color: var(--red);
+  padding: .7rem 1rem;
+  font-size: .86rem;
+  color: var(--danger);
   margin-bottom: 1rem;
   display: flex; align-items: center; gap: 8px;
 }
 
-/* ── Política ───────────────────────────────────── */
+/* ── Política ────────────────────────────────────── */
 .politica-texto {
-  font-size: 0.76rem;
-  color: #444;
+  font-size: .76rem;
+  color: var(--text-muted);
   text-align: center;
   line-height: 1.55;
 }
-.politica-texto a { color: var(--gold); text-decoration: none; font-weight: 600; }
+.politica-texto a { color: var(--primary); text-decoration: none; font-weight: 600; }
 .politica-texto a:hover { text-decoration: underline; }
 
-/* ── Footer ─────────────────────────────────────── */
+/* ── Footer ──────────────────────────────────────── */
 .cadastro-footer {
   margin-top: 1.25rem;
   text-align: center;
-  font-size: 0.86rem;
-  color: #444;
+  font-size: .86rem;
+  color: var(--text-body);
   padding-top: 1.1rem;
   border-top: 1px solid var(--border);
 }
-.cadastro-footer a { color: var(--gold); text-decoration: none; font-weight: 700; }
+.cadastro-footer a { color: var(--primary); text-decoration: none; font-weight: 600; }
 .cadastro-footer a:hover { text-decoration: underline; }
 
-/* ── Tela de Sucesso / Confirmação MongoDB ───────── */
+/* ── Tela de sucesso ─────────────────────────────── */
 .sucesso-topo {
   display: flex;
   align-items: center;
@@ -353,119 +311,93 @@ body {
 
 .sucesso-icone-check {
   flex-shrink: 0;
-  width: 56px; height: 56px;
-  background: var(--navy-mid);
-  color: var(--gold);
+  width: 52px; height: 52px;
+  background: var(--success-bg);
+  color: var(--success);
+  border: 2px solid var(--success-border);
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  animation: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  box-shadow: 0 0 0 6px rgba(42, 34, 128, 0.1);
+  animation: pop .4s cubic-bezier(.34,1.56,.64,1) both;
 }
 
 .sucesso-titulo {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.55rem;
+  font-size: 1.45rem;
   font-weight: 700;
-  color: #111;
-  margin-bottom: 0.2rem;
+  color: var(--text);
+  margin-bottom: .2rem;
 }
 
 .sucesso-sub {
-  font-size: 0.8rem;
-  color: #444;
-  font-weight: 400;
+  font-size: .82rem;
+  color: var(--text-muted);
 }
 
-/* Card estilo terminal/banco de dados */
+/* Card estilo banco de dados */
 .sucesso-db-card {
-  background: #0f0e2a;
-  border-radius: 12px;
-  padding: 1.1rem 1.2rem;
-  font-family: 'Courier New', 'Consolas', monospace;
-  border: 1px solid rgba(201, 162, 39, 0.25);
-  overflow: hidden;
+  background: var(--bg);
+  border-radius: var(--radius);
+  padding: 1rem 1.2rem;
+  border: 1px solid var(--border);
+  font-family: 'Courier New', monospace;
 }
 
 .sucesso-db-header {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: .85rem;
+  padding-bottom: .65rem;
+  border-bottom: 1px solid var(--border);
 }
 
 .db-badge {
-  background: var(--gold);
-  color: #0f0e2a;
-  font-size: 0.7rem;
+  background: var(--success);
+  color: #fff;
+  font-size: .68rem;
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 4px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  letter-spacing: 0.04em;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: .04em;
 }
 
-.db-colecao {
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.4);
-  font-family: 'Courier New', monospace;
-}
+.db-colecao { font-size: .73rem; color: var(--text-muted); font-family: 'Courier New', monospace; }
 
 .db-campo {
   display: flex;
   gap: 1rem;
   align-items: baseline;
   padding: 3px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid var(--border);
 }
 .db-campo:last-child { border-bottom: none; }
 
-.db-key {
-  font-size: 0.74rem;
-  color: #7b9fd4;
-  min-width: 110px;
-  flex-shrink: 0;
-}
+.db-key { font-size: .74rem; color: var(--primary); min-width: 110px; flex-shrink: 0; }
+.db-value { font-size: .78rem; color: var(--text-body); word-break: break-all; }
+.db-id   { color: var(--text-muted); font-size: .72rem; }
+.db-bool { color: var(--danger); }
+.db-date { color: var(--text-body); }
 
-.db-value {
-  font-size: 0.78rem;
-  color: #a8d8a8;
-  word-break: break-all;
-}
-
-.db-id   { color: #e8c97a; font-size: 0.72rem; }
-.db-bool { color: #f08080; }
-.db-date { color: #c4a0d8; }
-
-/* ── Sucesso antigo (mantido para compatibilidade) ─ */
-.sucesso-card {
-  text-align: center;
-  padding: 3rem 2rem 2.5rem;
-}
+/* Compatibilidade */
+.sucesso-card { text-align: center; padding: 2.5rem 2rem; }
 .sucesso-icone {
-  width: 72px; height: 72px;
-  background: var(--navy-mid);
-  color: var(--gold);
+  width: 68px; height: 68px;
+  background: var(--success-bg);
+  color: var(--success);
   border-radius: 50%;
-  font-size: 1.9rem;
+  font-size: 1.8rem;
   display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 1.5rem;
-  animation: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  box-shadow: 0 0 0 8px rgba(42,34,128,.1);
+  margin: 0 auto 1.4rem;
+  animation: pop .4s cubic-bezier(.34,1.56,.64,1) both;
+  border: 2px solid var(--success-border);
 }
 @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
-.sucesso-card h2 {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 2rem;
-  color: #111;
-  margin-bottom: 0.65rem;
-}
-.sucesso-card p { color: #444; font-size: 0.92rem; margin-bottom: 2rem; }
+.sucesso-card h2 { font-size: 1.8rem; font-weight: 700; color: var(--text); margin-bottom: .55rem; }
+.sucesso-card p { color: var(--text-muted); font-size: .92rem; margin-bottom: 1.75rem; }
 
-/* ── Responsivo ─────────────────────────────────── */
+/* ── Responsivo ──────────────────────────────────── */
 @media (max-width: 520px) {
   .card-body { padding: 1.5rem 1.25rem; }
   .cadastro-header { padding: 1.6rem 1.25rem 1.4rem; }
-  .cadastro-header h1 { font-size: 1.25rem; }
-    }
+  .cadastro-header h1 { font-size: 1.2rem; }
+}

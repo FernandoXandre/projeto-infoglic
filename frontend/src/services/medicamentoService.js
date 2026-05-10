@@ -31,3 +31,6 @@ export const registrarDose = (dados) =>
 // RF07 – Histórico de locais (rodízio de insulina)
 export const historicoLocais = (medId) =>
   api.get(`/medicamentos/${medId}/locais`, getHeaders()).then(r => r.data);
+
+export const historicoDoses = (dias = 7) =>
+  api.get(`/medicamentos/registros/historico?dias=${dias}`, getHeaders()).then(r => r.data);

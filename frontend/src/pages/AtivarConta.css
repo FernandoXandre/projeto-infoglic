@@ -1,24 +1,32 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --indigo-deep:  #1e1660;
-  --indigo-mid:   #2e22a0;
-  --cobalt:       #1e4db7;
-  --crimson:      #c01e2c;
-  --gold:         #c9a030;
-  --gold-light:   #e8b83a;
-  --white:        #ffffff;
-  --muted:        #8880c0;
-  --border:       rgba(201,160,48,0.22);
+  --primary:        #1d4ed8;
+  --primary-hover:  #1e40af;
+  --bg:             #f0f4f8;
+  --white:          #ffffff;
+  --text:           #1e293b;
+  --text-muted:     #94a3b8;
+  --border:         #e2e8f0;
+  --success:        #16a34a;
+  --success-bg:     #f0fdf4;
+  --success-border: #bbf7d0;
+  --danger:         #dc2626;
+  --danger-bg:      #fef2f2;
+  --danger-border:  #fecaca;
+  --shadow-lg:      0 10px 40px rgba(0,0,0,0.1), 0 4px 12px rgba(0,0,0,0.06);
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  background: var(--indigo-deep);
-  color: var(--white);
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
 }
+
+/* ── Orbs desativados ────────────────────────────── */
+.orb { display: none; }
 
 .ativar-wrapper {
   min-height: 100vh;
@@ -26,60 +34,49 @@ body {
   align-items: center;
   justify-content: center;
   padding: 2rem 1rem;
-  position: relative;
-  background:
-    radial-gradient(ellipse at 50% 0%,   rgba(46,34,160,0.9)  0%, transparent 65%),
-    radial-gradient(ellipse at 100% 100%, rgba(192,30,44,0.2)  0%, transparent 55%),
-    #0e0b3a;
+  background: var(--bg);
 }
 
-.orb { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; }
-.orb-a1 { width: 400px; height: 400px; background: rgba(46,34,160,0.35);  top: -100px; right: -80px; }
-.orb-a2 { width: 280px; height: 280px; background: rgba(192,30,44,0.18);  bottom: -60px; left: 0; }
-
 .ativar-card {
-  position: relative;
-  z-index: 1;
-  background: linear-gradient(160deg, #181460 0%, #0c0930 100%);
+  background: var(--white);
   border: 1px solid var(--border);
-  border-radius: 24px;
+  border-radius: 16px;
   padding: 3rem 2.5rem;
   width: 100%;
   max-width: 420px;
   text-align: center;
-  box-shadow: 0 32px 80px rgba(10,8,50,0.55);
-  animation: cardUp .5s cubic-bezier(.22,1,.36,1) both;
+  box-shadow: var(--shadow-lg);
+  animation: cardUp .4s ease both;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.1rem;
+  gap: 1rem;
 }
 
 @keyframes cardUp {
-  from { opacity: 0; transform: translateY(28px) scale(.97); }
-  to   { opacity: 1; transform: translateY(0)   scale(1); }
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .ativar-logo {
   display: flex;
   align-items: center;
-  gap: .55rem;
-  margin-bottom: .5rem;
+  gap: .5rem;
+  margin-bottom: .4rem;
 }
-.ativar-logo-icon { font-size: 1.6rem; }
+.ativar-logo-icon { font-size: 1.5rem; }
 .ativar-logo-nome {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.7rem;
+  font-size: 1.6rem;
   font-weight: 700;
-  color: var(--gold);
-  letter-spacing: .05em;
+  color: var(--primary);
+  letter-spacing: .01em;
 }
 
 /* Spinner de carregamento */
 .ativar-spinner {
-  width: 52px; height: 52px;
-  border: 3px solid rgba(201,160,48,0.2);
-  border-top-color: var(--gold);
+  width: 48px; height: 48px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin .8s linear infinite;
 }
@@ -87,12 +84,12 @@ body {
 
 /* Ícone de resultado */
 .ativar-icone {
-  width: 64px; height: 64px;
+  width: 60px; height: 60px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.75rem;
+  font-size: 1.6rem;
   font-weight: 700;
   animation: popIn .4s cubic-bezier(.34,1.56,.64,1);
 }
@@ -100,45 +97,41 @@ body {
   from { transform: scale(0); opacity: 0; }
   to   { transform: scale(1); opacity: 1; }
 }
-.ativar-icone-ok   { background: rgba(74,222,128,0.15); color: #4ade80; border: 2px solid rgba(74,222,128,0.4); }
-.ativar-icone-erro { background: rgba(224,37,53,0.15);  color: #e02535; border: 2px solid rgba(224,37,53,0.4); }
+
+.ativar-icone-ok   { background: var(--success-bg); color: var(--success); border: 2px solid var(--success-border); }
+.ativar-icone-erro { background: var(--danger-bg);  color: var(--danger);  border: 2px solid var(--danger-border); }
 
 .ativar-titulo {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.75rem;
+  font-size: 1.6rem;
   font-weight: 700;
-  color: var(--white);
+  color: var(--text);
 }
 
 .ativar-texto {
-  font-size: .92rem;
-  color: var(--muted);
+  font-size: .9rem;
+  color: var(--text-muted);
   line-height: 1.6;
   max-width: 300px;
 }
 
 .ativar-btn {
   display: inline-block;
-  margin-top: .5rem;
+  margin-top: .4rem;
   padding: .75rem 2rem;
-  background: linear-gradient(135deg, var(--cobalt), var(--indigo-mid));
-  border: 1px solid rgba(201,160,48,0.3);
-  border-radius: 10px;
+  background: var(--primary);
+  border: none;
+  border-radius: 8px;
   color: var(--white);
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: .95rem;
+  font-family: 'Inter', sans-serif;
+  font-size: .93rem;
   font-weight: 600;
   text-decoration: none;
-  transition: all .22s;
+  transition: background .2s, box-shadow .2s;
 }
 .ativar-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 22px rgba(30,77,183,.5);
-  border-color: rgba(201,160,48,.6);
+  background: var(--primary-hover);
+  box-shadow: 0 4px 16px rgba(29,78,216,0.3);
 }
 
-.ativar-btn-erro {
-  background: linear-gradient(135deg, rgba(192,30,44,.6), rgba(120,15,25,.8));
-  border-color: rgba(192,30,44,.4);
-}
-.ativar-btn-erro:hover { box-shadow: 0 6px 22px rgba(192,30,44,.35); }
+.ativar-btn-erro { background: var(--danger); }
+.ativar-btn-erro:hover { background: #b91c1c; box-shadow: 0 4px 16px rgba(220,38,38,0.3); }
