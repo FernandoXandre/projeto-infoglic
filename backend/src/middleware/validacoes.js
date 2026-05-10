@@ -11,7 +11,7 @@ const validarCadastroCliente = [
     .trim()
     .notEmpty().withMessage('E-mail é obrigatório')
     .isEmail().withMessage('Formato de e-mail inválido')
-    .normalizeEmail(),
+    .customSanitizer(v => v.toLowerCase()),
 
   body('senha')
     .notEmpty().withMessage('Senha é obrigatória')
@@ -63,7 +63,7 @@ const validarLogin = [
     .trim()
     .notEmpty().withMessage('E-mail é obrigatório')
     .isEmail().withMessage('Formato de e-mail inválido')
-    .normalizeEmail(),
+    .customSanitizer(v => v.toLowerCase()),
 
   body('senha')
     .notEmpty().withMessage('Senha é obrigatória'),
@@ -75,7 +75,7 @@ const validarRecuperarSenha = [
     .trim()
     .notEmpty().withMessage('E-mail é obrigatório')
     .isEmail().withMessage('Formato de e-mail inválido')
-    .normalizeEmail(),
+    .customSanitizer(v => v.toLowerCase()),
 ];
 
 // RF03 – Validação de redefinição de senha

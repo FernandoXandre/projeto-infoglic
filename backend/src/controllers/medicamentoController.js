@@ -138,6 +138,28 @@ const historicoLocais = async (req, res) => {
   }
 };
 
+// RF07 – Histórico de doses dos últimos N dias
+const historicoDoses = async (req, res) => {
+  try {
+    const dias = Math.min(parseInt(req.query.dias) || 7, 30);
+    const d = new Date();
+    d.setDate(d.getDate() - dias + 1);
+    const str = d.toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
+    const inicioDia = new Date(`${str}T00:00:00.000Z`);
+
+    const registros = await RegistroMedicacao.find({
+      cliente: req.usuario._id,
+      dataDia: { $gte: inicioDia },
+    })
+      .populate('medicamento', 'nome tipo')
+      .sort({ dataDia: -1, horarioProgramado: 1 });
+
+    res.json({ sucesso: true, dados: registros });
+  } catch {
+    res.status(500).json({ sucesso: false, mensagem: 'Erro ao buscar histórico de doses.' });
+  }
+};
+
 module.exports = {
   listarMedicamentos,
   criarMedicamento,
@@ -146,4 +168,5 @@ module.exports = {
   listarRegistrosDia,
   criarRegistro,
   historicoLocais,
+  historicoDoses,
 };

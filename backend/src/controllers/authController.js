@@ -11,7 +11,11 @@ const login = async (req, res) => {
   try {
     const { email, senha } = req.body;
 
-    const cliente = await Cliente.findOne({ email }).select('+senha');
+    // Busca case-insensitive para evitar falha por capitalização residual
+    const cliente = await Cliente.findOne({
+      email: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+    }).select('+senha');
+
     if (!cliente) {
       return res.status(401).json({
         sucesso: false,
@@ -19,8 +23,7 @@ const login = async (req, res) => {
       });
     }
 
-    const senhaCorreta = await cliente.compararSenha(senha);
-    if (!senhaCorreta) {
+    if (!cliente.ativo) {
       return res.status(401).json({
         sucesso: false,
         mensagem: 'E-mail ou senha incorretos.',
@@ -32,6 +35,14 @@ const login = async (req, res) => {
       return res.status(403).json({
         sucesso: false,
         mensagem: 'Conta não ativada. Verifique seu e-mail e clique no link de ativação.',
+      });
+    }
+
+    const senhaCorreta = await cliente.compararSenha(senha);
+    if (!senhaCorreta) {
+      return res.status(401).json({
+        sucesso: false,
+        mensagem: 'E-mail ou senha incorretos.',
       });
     }
 

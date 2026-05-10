@@ -7,6 +7,7 @@ const authRoutes = require('./routes/authRoutes');
 const registroRoutes = require('./routes/registroRoutes');
 const medicamentoRoutes = require('./routes/medicamentoRoutes');
 const eventoRoutes = require('./routes/eventoRoutes');
+const refeicaoRoutes = require('./routes/refeicaoRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -28,6 +29,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/registros', registroRoutes);
 app.use('/api/medicamentos', medicamentoRoutes);
 app.use('/api/eventos', eventoRoutes);
+app.use('/api/refeicoes', refeicaoRoutes);
 
 // Rota de health check
 app.get('/api/health', (req, res) => {
