@@ -83,6 +83,10 @@ const clienteSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    ultimoAcesso: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

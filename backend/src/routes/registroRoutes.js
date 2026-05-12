@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { criar, listar, atualizar, remover } = require('../controllers/registroController');
+const { criar, listar, atualizar, remover, listarMeses } = require('../controllers/registroController');
 const { proteger, apenasUsuarioPadrao } = require('../middleware/authMiddleware');
 
 // RF04 – Registro de Teste Glicêmico
@@ -8,6 +8,7 @@ const { proteger, apenasUsuarioPadrao } = require('../middleware/authMiddleware'
 router.post('/', proteger, apenasUsuarioPadrao, criar);
 
 // Listar, editar e remover: apenas autenticação (verifica dono no controller)
+router.get('/meses', proteger, listarMeses);
 router.get('/', proteger, listar);
 router.put('/:id', proteger, atualizar);
 router.delete('/:id', proteger, remover);

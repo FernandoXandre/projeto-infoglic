@@ -48,6 +48,9 @@ const login = async (req, res) => {
 
     const token = gerarToken(cliente._id);
 
+    cliente.ultimoAcesso = new Date();
+    await cliente.save();
+
     return res.status(200).json({
       sucesso: true,
       mensagem: 'Login realizado com sucesso.',

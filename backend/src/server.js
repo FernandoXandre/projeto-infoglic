@@ -8,6 +8,7 @@ const registroRoutes = require('./routes/registroRoutes');
 const medicamentoRoutes = require('./routes/medicamentoRoutes');
 const eventoRoutes = require('./routes/eventoRoutes');
 const refeicaoRoutes = require('./routes/refeicaoRoutes');
+const { iniciarLembretes } = require('./services/lembreteService');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -49,4 +50,5 @@ app.use((req, res) => {
 
 app.listen(PORT, () => {
   console.log(`💉  InfoGlic API rodando na porta ${PORT}`);
+  iniciarLembretes();
 });
