@@ -1051,3 +1051,132 @@
 .grafico-barras-wrap {
   padding: .5rem 0;
 }
+
+/* ── Navegação de mês ────────────────────────────── */
+.mes-nav {
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .2rem .4rem;
+}
+
+.mes-nav-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  color: var(--primary);
+  padding: .1rem .35rem;
+  border-radius: 5px;
+  line-height: 1;
+  transition: background .15s;
+}
+.mes-nav-btn:hover:not(:disabled) { background: var(--primary-light); }
+.mes-nav-btn:disabled { color: var(--text-muted); cursor: default; }
+
+.mes-nav-label {
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--text);
+  text-transform: capitalize;
+  white-space: nowrap;
+  min-width: 120px;
+  text-align: center;
+}
+
+/* ── Paginação ───────────────────────────────────── */
+.paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .3rem;
+  padding: 1rem 0 .25rem;
+  flex-wrap: wrap;
+}
+
+.pag-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 .5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--white);
+  color: var(--text-body);
+  font-size: .82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.pag-btn:hover:not(:disabled):not(.pag-btn-ativo) {
+  background: var(--primary-light);
+  border-color: var(--primary-border);
+  color: var(--primary);
+}
+.pag-btn:disabled { opacity: .4; cursor: default; }
+.pag-btn-ativo {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  cursor: default;
+}
+
+.pag-info {
+  font-size: .78rem;
+  color: var(--text-muted);
+  margin-left: .5rem;
+}
+
+/* ── Navegação dos gráficos ──────────────────────── */
+.grafico-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .75rem 0 .25rem;
+}
+
+.grafico-nav-btn {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: .3rem .75rem;
+  font-size: .8rem;
+  font-weight: 500;
+  color: var(--primary);
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+  white-space: nowrap;
+}
+.grafico-nav-btn:hover:not(:disabled) {
+  background: var(--primary-light);
+  border-color: var(--primary-border);
+}
+.grafico-nav-btn:disabled {
+  color: var(--text-muted);
+  cursor: default;
+  opacity: .5;
+}
+
+.grafico-nav-label {
+  font-size: .78rem;
+  color: var(--text-muted);
+  min-width: 160px;
+  text-align: center;
+}
+
+/* ── Seletor de mês no topo de seção ────────────── */
+.secao-mes-nav {
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: .45rem .75rem;
+  width: fit-content;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow-sm);
+}

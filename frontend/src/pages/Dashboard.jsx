@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './Dashboard.css';
-import { listar, criar, atualizar, remover } from '../services/registroService';
+import { listar, criar, atualizar, remover, listarMeses } from '../services/registroService';
 import {
   listarMedicamentos,
   criarMedicamento,
@@ -207,13 +207,30 @@ function gerarAlertasLembretes(registros, horarios) {
   return alertas;
 }
 
+// ── Navegação compartilhada dos gráficos ─────────────────────
+function GraficoNav({ offset, maxOffset, onAnterior, onProximo, label }) {
+  return (
+    <div className="grafico-nav">
+      <button className="grafico-nav-btn" onClick={onAnterior} disabled={offset >= maxOffset}>‹ Anterior</button>
+      <span className="grafico-nav-label">{label}</span>
+      <button className="grafico-nav-btn" onClick={onProximo} disabled={offset === 0}>Próximo ›</button>
+    </div>
+  );
+}
+
 // ── Gráfico ─────────────────────────────────────────────────
 function GraficoGlicemia({ registros, eventos }) {
+  const PONTOS = 14;
+  const [offset, setOffset] = useState(0);
+
   if (registros.length === 0) {
     return <div className="grafico-vazio">Registre sua primeira medição para ver o gráfico aqui.</div>;
   }
 
-  const dados = [...registros].sort((a, b) => new Date(a.dataHora) - new Date(b.dataHora)).slice(-14);
+  const totalPag = Math.ceil(registros.length / PONTOS);
+  // registros vem ordenado desc (mais recente primeiro); offset 0 = mais recentes
+  const fatia = registros.slice(offset * PONTOS, offset * PONTOS + PONTOS);
+  const dados = [...fatia].sort((a, b) => new Date(a.dataHora) - new Date(b.dataHora));
   const W = 600, H = 260;
   const PAD = { top: 30, right: 24, bottom: 66, left: 54 };
   const innerW = W - PAD.left - PAD.right;
@@ -248,7 +265,13 @@ function GraficoGlicemia({ registros, eventos }) {
     if (ev.observacao) eventoObsPorDia[dia] = ev.observacao;
   });
 
+  const fmtDia = (d) => new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  const navLabel = dados.length
+    ? `${fmtDia(dados[0].dataHora)} – ${fmtDia(dados[dados.length - 1].dataHora)} · ${offset * PONTOS + 1}–${Math.min((offset + 1) * PONTOS, registros.length)} de ${registros.length}`
+    : '';
+
   return (
+    <>
     <svg viewBox={`0 0 ${W} ${H}`} className="grafico-svg" aria-label="Histórico glicêmico">
       <rect x={PAD.left} y={clamp(y70, PAD.top, yFloor)} width={innerW}
         height={Math.max(0, yFloor - clamp(y70, PAD.top, yFloor))} fill="rgba(220,38,38,0.06)" />
@@ -315,6 +338,15 @@ function GraficoGlicemia({ registros, eventos }) {
         );
       })}
     </svg>
+    {totalPag > 1 && (
+      <GraficoNav
+        offset={offset} maxOffset={totalPag - 1}
+        onAnterior={() => setOffset(o => o + 1)}
+        onProximo={() => setOffset(o => o - 1)}
+        label={navLabel}
+      />
+    )}
+    </>
   );
 }
 
@@ -356,10 +388,13 @@ function GraficoDistribuicao({ registros }) {
 
 // Gráfico: refeições por dia (barras verticais empilhadas por carb)
 function GraficoRefeicoes({ refeicoes }) {
+  const MAX_OFFSET = 3;
+  const [offset, setOffset] = useState(0);
+
   const hoje = new Date();
   const dias = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(hoje);
-    d.setDate(d.getDate() - (6 - i));
+    d.setDate(d.getDate() - offset * 7 - (6 - i));
     return d.toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
   });
 
@@ -377,7 +412,9 @@ function GraficoRefeicoes({ refeicoes }) {
   });
 
   const maxTotal = Math.max(...dadosPorDia.map(d => d.total), 1);
-  const H = 140, BARRA = 36, GAP = 10;
+  const H = 140, GAP = 10;
+  const fmtDia = (str) => new Date(str + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  const navLabel = `${fmtDia(dias[0])} – ${fmtDia(dias[6])}`;
 
   return (
     <div className="grafico-barras-wrap">
@@ -399,22 +436,33 @@ function GraficoRefeicoes({ refeicoes }) {
                 {d.baixa > 0 && <div style={{ height: hBaixa, background: '#16a34a', borderRadius: d.alta === 0 && d.media === 0 ? '3px 3px 0 0' : 0, opacity: .85 }} />}
                 {d.total === 0 && <div style={{ height: 3, background: '#e2e8f0', borderRadius: 3 }} />}
               </div>
-              <span style={{ fontSize: '.7rem', color: '#94a3b8', marginTop: 4 }}>{d.dia}</span>
+              <span style={{ fontSize: '.7rem', color: offset === 0 && i === 6 ? '#1d4ed8' : '#94a3b8', fontWeight: offset === 0 && i === 6 ? 700 : 400, marginTop: 4 }}>
+                {offset === 0 && i === 6 ? 'Hoje' : d.dia}
+              </span>
               {d.total > 0 && <span style={{ fontSize: '.7rem', fontWeight: 700, color: '#475569' }}>{d.total}</span>}
             </div>
           );
         })}
       </div>
+      <GraficoNav
+        offset={offset} maxOffset={MAX_OFFSET}
+        onAnterior={() => setOffset(o => o + 1)}
+        onProximo={() => setOffset(o => o - 1)}
+        label={navLabel}
+      />
     </div>
   );
 }
 
 // Gráfico: adesão a medicamentos (barras por dia)
 function GraficoAdesao({ dosesHistorico }) {
+  const MAX_OFFSET = 3;
+  const [offset, setOffset] = useState(0);
+
   const hoje = new Date();
   const dias = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(hoje);
-    d.setDate(d.getDate() - (6 - i));
+    d.setDate(d.getDate() - offset * 7 - (6 - i));
     return d.toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
   });
 
@@ -433,6 +481,8 @@ function GraficoAdesao({ dosesHistorico }) {
 
   const maxTotal = Math.max(...dadosPorDia.map(d => d.total), 1);
   const H = 140;
+  const fmtDia = (str) => new Date(str + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  const navLabel = `${fmtDia(dias[0])} – ${fmtDia(dias[6])}`;
 
   return (
     <div className="grafico-barras-wrap">
@@ -443,10 +493,10 @@ function GraficoAdesao({ dosesHistorico }) {
       </div>
       <div className="barras-container" style={{ display: 'flex', alignItems: 'flex-end', gap: 10, height: H + 30 }}>
         {dadosPorDia.map((d, i) => {
+          const ehHoje = offset === 0 && i === 6;
           const hTomado = d.total ? (d.tomado / maxTotal) * H : 0;
           const hPulado = d.total ? (d.pulado / maxTotal) * H : 0;
           const hAdiado = d.total ? (d.adiado / maxTotal) * H : 0;
-          const ehHoje  = i === 6;
           return (
             <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
               <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', height: H, width: '100%', border: ehHoje ? '2px solid #1d4ed8' : 'none', borderRadius: 6, overflow: 'hidden' }}>
@@ -462,21 +512,42 @@ function GraficoAdesao({ dosesHistorico }) {
           );
         })}
       </div>
+      <GraficoNav
+        offset={offset} maxOffset={MAX_OFFSET}
+        onAnterior={() => setOffset(o => o + 1)}
+        onProximo={() => setOffset(o => o - 1)}
+        label={navLabel}
+      />
     </div>
   );
 }
 
 // Gráfico: frequência de tags de eventos (barras horizontais)
 function GraficoEventos({ eventos }) {
-  const TAGS = ['Estresse', 'Atividade Física', 'Doença/Febre', 'Álcool'];
+  const MAX_OFFSET = 3;
+  const [offset, setOffset] = useState(0);
+
+  const TAGS  = ['Estresse', 'Atividade Física', 'Doença/Febre', 'Álcool'];
   const CORES = { 'Estresse': '#f97316', 'Atividade Física': '#3b82f6', 'Doença/Febre': '#ef4444', 'Álcool': '#a855f7' };
 
+  const hoje = new Date();
+  const fimPeriodo   = new Date(hoje); fimPeriodo.setDate(fimPeriodo.getDate() - offset * 7);
+  const inicioPeriodo = new Date(fimPeriodo); inicioPeriodo.setDate(inicioPeriodo.getDate() - 6);
+  inicioPeriodo.setHours(0, 0, 0, 0); fimPeriodo.setHours(23, 59, 59, 999);
+
+  const eventosSemana = eventos.filter(e => {
+    const dt = new Date(e.dataDia);
+    return dt >= inicioPeriodo && dt <= fimPeriodo;
+  });
+
   const contagens = TAGS.map(tag => ({
-    tag,
-    cor: CORES[tag],
-    count: eventos.filter(e => (e.tags || []).includes(tag)).length,
+    tag, cor: CORES[tag],
+    count: eventosSemana.filter(e => (e.tags || []).includes(tag)).length,
   }));
   const maxCount = Math.max(...contagens.map(c => c.count), 1);
+
+  const fmtDia   = (d) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  const navLabel = `${fmtDia(inicioPeriodo)} – ${fmtDia(fimPeriodo)}`;
 
   if (eventos.length === 0) return <div className="grafico-vazio">Nenhum contexto registrado ainda.</div>;
 
@@ -491,6 +562,12 @@ function GraficoEventos({ eventos }) {
           <span className="dist-count">{c.count} {c.count === 1 ? 'dia' : 'dias'}</span>
         </div>
       ))}
+      <GraficoNav
+        offset={offset} maxOffset={MAX_OFFSET}
+        onAnterior={() => setOffset(o => o + 1)}
+        onProximo={() => setOffset(o => o - 1)}
+        label={navLabel}
+      />
     </div>
   );
 }
@@ -529,6 +606,12 @@ export default function Dashboard() {
   const [salvando, setSalvando]       = useState(false);
   const [erroForm, setErroForm]       = useState('');
   const [mensagem, setMensagem]       = useState('');
+  const [mesAtual, setMesAtual]       = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  });
+  const [paginaAtual, setPaginaAtual]           = useState(1);
+  const [mesesComRegistros, setMesesComRegistros] = useState(null); // null = ainda carregando
 
   // RF05 / RF06
   const [alertas, setAlertas]                 = useState([]);
@@ -576,9 +659,17 @@ export default function Dashboard() {
 
   // ── Loaders ───────────────────────────────────────────────
   const carregarRegistros = useCallback(async () => {
-    try { const r = await listar(); setRegistros(r.dados || []); }
+    try {
+      const r = await listar(mesAtual);
+      setRegistros(r.dados || []);
+      setPaginaAtual(1);
+    }
     catch { setMensagem('Erro ao carregar registros.'); }
     finally { setLoading(false); }
+  }, [mesAtual]);
+
+  const carregarMesesComRegistros = useCallback(async () => {
+    try { const r = await listarMeses(); setMesesComRegistros(r.dados || []); } catch {}
   }, []);
 
   const carregarMedicamentos = useCallback(async () => {
@@ -602,17 +693,18 @@ export default function Dashboard() {
   }, []);
 
   const carregarRefeicoes = useCallback(async () => {
-    try { const r = await listarRefeicoes(7); setRefeicoes(r.dados || []); } catch {}
+    try { const r = await listarRefeicoes(30); setRefeicoes(r.dados || []); } catch {}
   }, []);
 
   const carregarDosesHistorico = useCallback(async () => {
-    try { const r = await historicoDoses(7); setDosesHistorico(r.dados || []); } catch {}
+    try { const r = await historicoDoses(30); setDosesHistorico(r.dados || []); } catch {}
   }, []);
 
   useEffect(() => {
     carregarRegistros(); carregarMedicamentos(); carregarRegistrosDia();
     carregarEventos(); carregarRefeicoes(); carregarDosesHistorico();
-  }, [carregarRegistros, carregarMedicamentos, carregarRegistrosDia, carregarEventos, carregarRefeicoes, carregarDosesHistorico]);
+    carregarMesesComRegistros();
+  }, [carregarRegistros, carregarMedicamentos, carregarRegistrosDia, carregarEventos, carregarRefeicoes, carregarDosesHistorico, carregarMesesComRegistros]);
 
   useEffect(() => {
     setAlertas([...gerarAlertasGlicemia(registros), ...gerarAlertasLembretes(registros, horarios)]);
@@ -642,14 +734,14 @@ export default function Dashboard() {
       const dados = { ...form, valor: valorNum, dataHora: form.dataHora + ':00-03:00' };
       if (editandoId) { await atualizar(editandoId, dados); exibirMensagem('Registro atualizado!'); }
       else { await criar(dados); exibirMensagem('Medição registrada!'); }
-      fecharModal(); carregarRegistros();
+      fecharModal(); carregarRegistros(); carregarMesesComRegistros();
     } catch (err) { setErroForm(err.response?.data?.mensagem || 'Erro ao salvar.'); }
     finally { setSalvando(false); }
   }
 
   async function handleRemover(id) {
     if (!window.confirm('Deseja remover este registro permanentemente?')) return;
-    try { await remover(id); exibirMensagem('Registro removido.'); carregarRegistros(); }
+    try { await remover(id); exibirMensagem('Registro removido.'); carregarRegistros(); carregarMesesComRegistros(); }
     catch { exibirMensagem('Erro ao remover registro.'); }
   }
 
@@ -790,6 +882,38 @@ export default function Dashboard() {
       setVinculandoRefId(null); exibirMensagem(registroId ? 'Teste glicêmico vinculado!' : 'Vínculo removido.');
     } catch (err) { exibirMensagem(err.response?.data?.mensagem || 'Erro ao vincular.'); }
   }
+
+  // ── Navegação de mês ─────────────────────────────────────
+  const REGISTROS_POR_PAGINA = 10;
+
+  function labelMes() {
+    const [ano, mes] = mesAtual.split('-').map(Number);
+    return new Date(ano, mes - 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  }
+  function irMesAnterior() {
+    const [ano, mes] = mesAtual.split('-').map(Number);
+    const d = new Date(ano, mes - 2);
+    setMesAtual(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  }
+  function irProximoMes() {
+    const [ano, mes] = mesAtual.split('-').map(Number);
+    const d = new Date(ano, mes);
+    setMesAtual(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  }
+  function ehMesAtual() {
+    const d = new Date();
+    return mesAtual === `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  }
+  function ehMesAnteriorBloqueado() {
+    if (!mesesComRegistros) return false;
+    return !mesesComRegistros.some(m => m < mesAtual);
+  }
+
+  const totalPaginas       = Math.ceil(registros.length / REGISTROS_POR_PAGINA);
+  const registrosPaginados = registros.slice(
+    (paginaAtual - 1) * REGISTROS_POR_PAGINA,
+    paginaAtual * REGISTROS_POR_PAGINA
+  );
 
   // ── Estatísticas ──────────────────────────────────────────
   const ultimo = registros[0] || null;
@@ -943,15 +1067,22 @@ export default function Dashboard() {
                 <div className="painel-topo">
                   <div>
                     <h2 className="painel-titulo">Histórico Glicêmico</h2>
-                    <p className="painel-sub">Últimas 14 medições</p>
+                    <p className="painel-sub">{registros.length} medição(ões) em {labelMes()}</p>
                   </div>
-                  <div className="grafico-legenda">
-                    <span className="leg-item" style={{ color: '#16a34a' }}>● Normal (70–180)</span>
-                    <span className="leg-item" style={{ color: '#dc2626' }}>● Hipo (&lt;70)</span>
-                    <span className="leg-item" style={{ color: '#d97706' }}>● Hiper (&gt;180)</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', flexWrap: 'wrap' }}>
+                    <div className="grafico-legenda">
+                      <span className="leg-item" style={{ color: '#16a34a' }}>● Normal (70–180)</span>
+                      <span className="leg-item" style={{ color: '#dc2626' }}>● Hipo (&lt;70)</span>
+                      <span className="leg-item" style={{ color: '#d97706' }}>● Hiper (&gt;180)</span>
+                    </div>
+                    <div className="mes-nav">
+                      <button className="mes-nav-btn" onClick={irMesAnterior} disabled={ehMesAnteriorBloqueado()} title="Mês anterior">‹</button>
+                      <span className="mes-nav-label">{labelMes()}</span>
+                      <button className="mes-nav-btn" onClick={irProximoMes} disabled={ehMesAtual()} title="Próximo mês">›</button>
+                    </div>
                   </div>
                 </div>
-                <GraficoGlicemia registros={registros} eventos={eventos} />
+                <GraficoGlicemia key={mesAtual} registros={registros} eventos={eventos} />
                 <div style={{ marginTop: '.5rem', display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
                   {Object.entries(TAG_CORES).map(([tag, cor]) => (
                     <span key={tag} className="leg-item leg-evento" style={{ color: cor }}>● {tag}</span>
@@ -964,6 +1095,13 @@ export default function Dashboard() {
           {/* ── Seção: Registros Glicêmicos ────────────── */}
           {secaoAtiva === 'registros' && (
             <>
+            {/* Seletor de mês — controla gráficos e tabela */}
+            <div className="secao-mes-nav">
+              <button className="mes-nav-btn" onClick={irMesAnterior} disabled={ehMesAnteriorBloqueado()} title="Mês anterior">‹</button>
+              <span className="mes-nav-label">{labelMes()}</span>
+              <button className="mes-nav-btn" onClick={irProximoMes} disabled={ehMesAtual()} title="Próximo mês">›</button>
+            </div>
+
             {/* Stats de registros */}
             <div className="stats-row">
               <div className={`stat-card ${ultimo ? `borda-${classificar(ultimo.valor)}` : ''}`}>
@@ -1000,7 +1138,7 @@ export default function Dashboard() {
               <div className="painel-topo">
                 <div>
                   <h2 className="painel-titulo">Tendência Glicêmica</h2>
-                  <p className="painel-sub">Últimas 14 medições</p>
+                  <p className="painel-sub">{registros.length} medição(ões) em {labelMes()}</p>
                 </div>
                 <div className="grafico-legenda">
                   <span className="leg-item" style={{ color: '#16a34a' }}>● Normal</span>
@@ -1008,14 +1146,14 @@ export default function Dashboard() {
                   <span className="leg-item" style={{ color: '#d97706' }}>● Hiper</span>
                 </div>
               </div>
-              <GraficoGlicemia registros={registros} eventos={eventos} />
+              <GraficoGlicemia key={mesAtual} registros={registros} eventos={eventos} />
             </section>
 
             <section className="painel">
               <div className="painel-topo">
                 <div>
                   <h2 className="painel-titulo">Distribuição por Faixa</h2>
-                  <p className="painel-sub">Todas as medições registradas</p>
+                  <p className="painel-sub">Medições de {labelMes()}</p>
                 </div>
               </div>
               <GraficoDistribuicao registros={registros} />
@@ -1024,45 +1162,77 @@ export default function Dashboard() {
             <section className="painel">
               <div className="painel-topo">
                 <div>
-                  <h2 className="painel-titulo">Histórico Completo</h2>
-                  <p className="painel-sub">{registros.length} registro(s) encontrado(s)</p>
+                  <h2 className="painel-titulo">Histórico de Registros</h2>
+                  <p className="painel-sub">{registros.length} registro(s) em {labelMes()}</p>
                 </div>
-                <button className="btn-novo" onClick={abrirNovo}>+ Novo Registro</button>
+                <button className="btn-novo" onClick={abrirNovo}>+ Novo</button>
               </div>
               {loading ? (
                 <div className="estado-info">Carregando registros...</div>
               ) : registros.length === 0 ? (
                 <div className="estado-vazio">
-                  <p>Nenhuma medição registrada ainda.</p>
-                  <button className="btn-novo" style={{ marginTop: '1rem' }} onClick={abrirNovo}>
-                    Registrar primeira medição
-                  </button>
+                  <p>Nenhuma medição registrada em {labelMes()}.</p>
+                  {ehMesAtual() && (
+                    <button className="btn-novo" style={{ marginTop: '1rem' }} onClick={abrirNovo}>
+                      Registrar primeira medição
+                    </button>
+                  )}
                 </div>
               ) : (
-                <div className="tabela-scroll">
-                  <table className="tabela">
-                    <thead>
-                      <tr>
-                        <th>Data / Hora</th><th>Valor</th><th>Estado</th>
-                        <th>Observação</th><th>Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {registros.map(r => (
-                        <tr key={r._id}>
-                          <td>{formatarDataHora(r.dataHora)}</td>
-                          <td><span className={`badge badge-${classificar(r.valor)}`}>{r.valor} mg/dL</span></td>
-                          <td>{r.estado}</td>
-                          <td className="td-obs">{r.observacao || '—'}</td>
-                          <td className="td-acoes">
-                            <button className="btn-tab btn-editar" onClick={() => abrirEdicao(r)}>Editar</button>
-                            <button className="btn-tab btn-remover" onClick={() => handleRemover(r._id)}>Remover</button>
-                          </td>
+                <>
+                  <div className="tabela-scroll">
+                    <table className="tabela">
+                      <thead>
+                        <tr>
+                          <th>Data / Hora</th><th>Valor</th><th>Estado</th>
+                          <th>Observação</th><th>Ações</th>
                         </tr>
+                      </thead>
+                      <tbody>
+                        {registrosPaginados.map(r => (
+                          <tr key={r._id}>
+                            <td>{formatarDataHora(r.dataHora)}</td>
+                            <td><span className={`badge badge-${classificar(r.valor)}`}>{r.valor} mg/dL</span></td>
+                            <td>{r.estado}</td>
+                            <td className="td-obs">{r.observacao || '—'}</td>
+                            <td className="td-acoes">
+                              <button className="btn-tab btn-editar" onClick={() => abrirEdicao(r)}>Editar</button>
+                              <button className="btn-tab btn-remover" onClick={() => handleRemover(r._id)}>Remover</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {totalPaginas > 1 && (
+                    <div className="paginacao">
+                      <button
+                        className="pag-btn"
+                        onClick={() => setPaginaAtual(p => p - 1)}
+                        disabled={paginaAtual === 1}
+                      >‹</button>
+
+                      {Array.from({ length: totalPaginas }, (_, i) => i + 1).map(p => (
+                        <button
+                          key={p}
+                          className={`pag-btn ${p === paginaAtual ? 'pag-btn-ativo' : ''}`}
+                          onClick={() => setPaginaAtual(p)}
+                        >{p}</button>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
+
+                      <button
+                        className="pag-btn"
+                        onClick={() => setPaginaAtual(p => p + 1)}
+                        disabled={paginaAtual === totalPaginas}
+                      >›</button>
+
+                      <span className="pag-info">
+                        {(paginaAtual - 1) * REGISTROS_POR_PAGINA + 1}–{Math.min(paginaAtual * REGISTROS_POR_PAGINA, registros.length)} de {registros.length}
+                      </span>
+                    </div>
+                  )}
+                </>
               )}
             </section>
             </>

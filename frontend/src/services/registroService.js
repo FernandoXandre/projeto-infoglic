@@ -8,9 +8,9 @@ const getHeaders = () => ({
   headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
 });
 
-// RF04 – Listar registros do usuário autenticado
-export const listar = () =>
-  api.get('/registros', getHeaders()).then(r => r.data);
+// RF04 – Listar registros do mês (YYYY-MM). Sem parâmetro = mês atual.
+export const listar = (mes) =>
+  api.get('/registros', { ...getHeaders(), params: mes ? { mes } : {} }).then(r => r.data);
 
 // RF04 – Criar novo registro glicêmico
 export const criar = (dados) =>
@@ -23,3 +23,7 @@ export const atualizar = (id, dados) =>
 // RF04 – Remover registro
 export const remover = (id) =>
   api.delete(`/registros/${id}`, getHeaders()).then(r => r.data);
+
+// RF04 – Meses com ao menos um registro (array YYYY-MM ordenado)
+export const listarMeses = () =>
+  api.get('/registros/meses', getHeaders()).then(r => r.data);
