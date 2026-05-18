@@ -7,21 +7,38 @@ function diaBrasilia(dataStr) {
   return new Date(`${str}T00:00:00.000Z`);
 }
 
-// RF12 – Listar eventos dos últimos N dias (padrão: 30, para cobrir o gráfico)
+// RF12 – Listar eventos do mês selecionado (ou últimos 30 dias como fallback)
 const listarEventos = async (req, res) => {
   try {
-    const dias = Math.min(parseInt(req.query.dias) || 30, 90);
-    const limite = new Date();
-    limite.setDate(limite.getDate() - dias);
+    const { mes } = req.query;
+    let filtro;
+    if (mes && /^\d{4}-\d{2}$/.test(mes)) {
+      const [ano, mesNum] = mes.split('-').map(Number);
+      filtro = {
+        cliente: req.usuario._id,
+        dataDia: { $gte: new Date(Date.UTC(ano, mesNum - 1, 1)), $lt: new Date(Date.UTC(ano, mesNum, 1)) },
+      };
+    } else {
+      const limite = new Date();
+      limite.setDate(limite.getDate() - Math.min(parseInt(req.query.dias) || 30, 90));
+      filtro = { cliente: req.usuario._id, dataDia: { $gte: limite } };
+    }
 
-    const eventos = await EventoExterno.find({
-      cliente: req.usuario._id,
-      dataDia: { $gte: limite },
-    }).sort({ dataDia: -1 });
-
+    const eventos = await EventoExterno.find(filtro).sort({ dataDia: -1 });
     res.json({ sucesso: true, dados: eventos });
   } catch {
     res.status(500).json({ sucesso: false, mensagem: 'Erro ao buscar eventos.' });
+  }
+};
+
+// RF12 – Meses que possuem ao menos um evento (YYYY-MM, ordenado)
+const listarMeses = async (req, res) => {
+  try {
+    const eventos = await EventoExterno.find({ cliente: req.usuario._id }, { dataDia: 1 }).lean();
+    const set = new Set(eventos.map(e => new Date(e.dataDia).toISOString().slice(0, 7)));
+    res.json({ sucesso: true, dados: [...set].sort() });
+  } catch {
+    res.status(500).json({ sucesso: false, mensagem: 'Erro ao buscar meses.' });
   }
 };
 
@@ -66,4 +83,4 @@ const removerEvento = async (req, res) => {
   }
 };
 
-module.exports = { listarEventos, salvarEvento, removerEvento };
+module.exports = { listarEventos, listarMeses, salvarEvento, removerEvento };

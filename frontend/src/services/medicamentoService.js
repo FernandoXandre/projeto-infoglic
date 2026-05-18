@@ -32,5 +32,10 @@ export const registrarDose = (dados) =>
 export const historicoLocais = (medId) =>
   api.get(`/medicamentos/${medId}/locais`, getHeaders()).then(r => r.data);
 
-export const historicoDoses = (dias = 7) =>
-  api.get(`/medicamentos/registros/historico?dias=${dias}`, getHeaders()).then(r => r.data);
+// RF07 – Histórico de doses do mês (YYYY-MM) ou últimos N dias
+export const historicoDoses = (mes) =>
+  api.get('/medicamentos/registros/historico', { ...getHeaders(), params: mes ? { mes } : { dias: 30 } }).then(r => r.data);
+
+// RF07 – Meses que possuem ao menos um registro de medicação
+export const listarMesesDoses = () =>
+  api.get('/medicamentos/registros/meses', getHeaders()).then(r => r.data);

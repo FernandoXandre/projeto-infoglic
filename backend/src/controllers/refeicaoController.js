@@ -30,24 +30,48 @@ const criar = async (req, res) => {
   }
 };
 
-// RF08 – Listar refeições dos últimos N dias
+// RF08 – Listar refeições do mês selecionado (ou últimos 7 dias como fallback)
 const listar = async (req, res) => {
   try {
-    const dias = Math.min(parseInt(req.query.dias) || 7, 90);
-    const desde = new Date();
-    desde.setDate(desde.getDate() - dias);
+    const { mes } = req.query;
+    let filtro;
+    if (mes && /^\d{4}-\d{2}$/.test(mes)) {
+      const [ano, mesNum] = mes.split('-').map(Number);
+      filtro = {
+        cliente:  req.usuario._id,
+        dataHora: { $gte: new Date(Date.UTC(ano, mesNum - 1, 1)), $lt: new Date(Date.UTC(ano, mesNum, 1)) },
+      };
+    } else {
+      const desde = new Date();
+      desde.setDate(desde.getDate() - Math.min(parseInt(req.query.dias) || 7, 90));
+      filtro = { cliente: req.usuario._id, dataHora: { $gte: desde } };
+    }
 
-    const refeicoes = await Refeicao.find({
-      cliente: req.usuario._id,
-      dataHora: { $gte: desde },
-    })
+    const refeicoes = await Refeicao.find(filtro)
       .populate('registroVinculado', 'valor estado dataHora')
       .sort({ dataHora: -1 })
-      .limit(100);
+      .limit(200);
 
     res.json({ sucesso: true, dados: refeicoes });
   } catch {
     res.status(500).json({ sucesso: false, mensagem: 'Erro ao buscar refeições.' });
+  }
+};
+
+// RF08 – Meses que possuem ao menos uma refeição (YYYY-MM, ordenado)
+const listarMeses = async (req, res) => {
+  try {
+    const refeicoes = await Refeicao.find({ cliente: req.usuario._id }, { dataHora: 1 }).lean();
+    const set = new Set(
+      refeicoes.map(r =>
+        new Date(r.dataHora)
+          .toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' })
+          .slice(0, 7)
+      )
+    );
+    res.json({ sucesso: true, dados: [...set].sort() });
+  } catch {
+    res.status(500).json({ sucesso: false, mensagem: 'Erro ao buscar meses.' });
   }
 };
 
@@ -151,4 +175,4 @@ const vincular = async (req, res) => {
   }
 };
 
-module.exports = { criar, listar, atualizar, remover, vincular };
+module.exports = { criar, listar, listarMeses, atualizar, remover, vincular };

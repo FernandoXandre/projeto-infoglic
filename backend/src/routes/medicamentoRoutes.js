@@ -9,6 +9,7 @@ const {
   criarRegistro,
   historicoLocais,
   historicoDoses,
+  listarMesesDoses,
 } = require('../controllers/medicamentoController');
 const { proteger } = require('../middleware/authMiddleware');
 
@@ -24,6 +25,7 @@ router.get('/registros/hoje',    proteger, listarRegistrosDia);
 router.post('/registros/hoje',   proteger, criarRegistro);
 
 router.get('/registros/historico', proteger, historicoDoses);
+router.get('/registros/meses',    proteger, listarMesesDoses);
 
 // RF07 – Histórico de locais de aplicação (rodízio de insulina)
 router.get('/:id/locais', proteger, historicoLocais);

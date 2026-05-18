@@ -12,9 +12,13 @@ api.interceptors.request.use(config => {
   return config;
 });
 
-// RF08 – Listar refeições dos últimos N dias
-export const listarRefeicoes = (dias = 7) =>
-  api.get(`/refeicoes?dias=${dias}`).then(r => r.data);
+// RF08 – Listar refeições do mês (YYYY-MM) ou últimos N dias
+export const listarRefeicoes = (mes) =>
+  api.get('/refeicoes', { params: mes ? { mes } : { dias: 30 } }).then(r => r.data);
+
+// RF08 – Meses que possuem ao menos uma refeição
+export const listarMesesRefeicoes = () =>
+  api.get('/refeicoes/meses').then(r => r.data);
 
 // RF08 – Criar nova refeição
 export const criarRefeicao = (dados) =>

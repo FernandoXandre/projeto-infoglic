@@ -138,25 +138,43 @@ const historicoLocais = async (req, res) => {
   }
 };
 
-// RF07 – Histórico de doses dos últimos N dias
+// RF07 – Histórico de doses do mês selecionado (ou últimos 7 dias como fallback)
 const historicoDoses = async (req, res) => {
   try {
-    const dias = Math.min(parseInt(req.query.dias) || 7, 30);
-    const d = new Date();
-    d.setDate(d.getDate() - dias + 1);
-    const str = d.toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
-    const inicioDia = new Date(`${str}T00:00:00.000Z`);
+    const { mes } = req.query;
+    let filtro;
+    if (mes && /^\d{4}-\d{2}$/.test(mes)) {
+      const [ano, mesNum] = mes.split('-').map(Number);
+      filtro = {
+        cliente: req.usuario._id,
+        dataDia: { $gte: new Date(Date.UTC(ano, mesNum - 1, 1)), $lt: new Date(Date.UTC(ano, mesNum, 1)) },
+      };
+    } else {
+      const dias = Math.min(parseInt(req.query.dias) || 7, 30);
+      const d = new Date();
+      d.setDate(d.getDate() - dias + 1);
+      const str = d.toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
+      filtro = { cliente: req.usuario._id, dataDia: { $gte: new Date(`${str}T00:00:00.000Z`) } };
+    }
 
-    const registros = await RegistroMedicacao.find({
-      cliente: req.usuario._id,
-      dataDia: { $gte: inicioDia },
-    })
+    const registros = await RegistroMedicacao.find(filtro)
       .populate('medicamento', 'nome tipo')
       .sort({ dataDia: -1, horarioProgramado: 1 });
 
     res.json({ sucesso: true, dados: registros });
   } catch {
     res.status(500).json({ sucesso: false, mensagem: 'Erro ao buscar histórico de doses.' });
+  }
+};
+
+// RF07 – Meses que possuem ao menos um registro de medicação (YYYY-MM, ordenado)
+const listarMesesDoses = async (req, res) => {
+  try {
+    const registros = await RegistroMedicacao.find({ cliente: req.usuario._id }, { dataDia: 1 }).lean();
+    const set = new Set(registros.map(r => new Date(r.dataDia).toISOString().slice(0, 7)));
+    res.json({ sucesso: true, dados: [...set].sort() });
+  } catch {
+    res.status(500).json({ sucesso: false, mensagem: 'Erro ao buscar meses.' });
   }
 };
 
@@ -169,4 +187,5 @@ module.exports = {
   criarRegistro,
   historicoLocais,
   historicoDoses,
+  listarMesesDoses,
 };

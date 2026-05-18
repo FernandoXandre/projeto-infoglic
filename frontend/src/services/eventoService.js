@@ -8,9 +8,13 @@ const getHeaders = () => ({
   headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
 });
 
-// RF12 – Eventos externos
-export const listarEventos = (dias = 30) =>
-  api.get(`/eventos?dias=${dias}`, getHeaders()).then(r => r.data);
+// RF12 – Eventos externos do mês (YYYY-MM) ou últimos N dias
+export const listarEventos = (mes) =>
+  api.get('/eventos', { ...getHeaders(), params: mes ? { mes } : { dias: 30 } }).then(r => r.data);
+
+// RF12 – Meses que possuem ao menos um evento
+export const listarMesesEventos = () =>
+  api.get('/eventos/meses', getHeaders()).then(r => r.data);
 
 export const salvarEvento = (dados) =>
   api.post('/eventos', dados, getHeaders()).then(r => r.data);

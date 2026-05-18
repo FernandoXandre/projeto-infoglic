@@ -10,9 +10,10 @@ import {
   registrarDose,
   historicoLocais,
   historicoDoses,
+  listarMesesDoses,
 } from '../services/medicamentoService';
-import { listarEventos, salvarEvento, removerEvento } from '../services/eventoService';
-import { listarRefeicoes, criarRefeicao, atualizarRefeicao, removerRefeicao, vincularRefeicao } from '../services/refeicaoService';
+import { listarEventos, listarMesesEventos, salvarEvento, removerEvento } from '../services/eventoService';
+import { listarRefeicoes, listarMesesRefeicoes, criarRefeicao, atualizarRefeicao, removerRefeicao, vincularRefeicao } from '../services/refeicaoService';
 
 const ESTADOS = ['Jejum', 'Pré-prandial', 'Pós-prandial', 'Madrugada', 'Geral'];
 const HORARIOS_KEY = 'infoglic_horarios';
@@ -207,17 +208,6 @@ function gerarAlertasLembretes(registros, horarios) {
   return alertas;
 }
 
-// ── Navegação compartilhada dos gráficos ─────────────────────
-function GraficoNav({ offset, maxOffset, onAnterior, onProximo, label }) {
-  return (
-    <div className="grafico-nav">
-      <button className="grafico-nav-btn" onClick={onAnterior} disabled={offset >= maxOffset}>‹ Anterior</button>
-      <span className="grafico-nav-label">{label}</span>
-      <button className="grafico-nav-btn" onClick={onProximo} disabled={offset === 0}>Próximo ›</button>
-    </div>
-  );
-}
-
 // ── Gráfico ─────────────────────────────────────────────────
 function GraficoGlicemia({ registros, eventos }) {
   const PONTOS = 14;
@@ -339,12 +329,18 @@ function GraficoGlicemia({ registros, eventos }) {
       })}
     </svg>
     {totalPag > 1 && (
-      <GraficoNav
-        offset={offset} maxOffset={totalPag - 1}
-        onAnterior={() => setOffset(o => o + 1)}
-        onProximo={() => setOffset(o => o - 1)}
-        label={navLabel}
-      />
+      <div className="paginacao">
+        <button className="pag-btn" onClick={() => setOffset(o => o + 1)} disabled={offset >= totalPag - 1}>‹</button>
+        {Array.from({ length: totalPag }, (_, i) => i + 1).map(p => (
+          <button
+            key={p}
+            className={`pag-btn ${p === totalPag - offset ? 'pag-btn-ativo' : ''}`}
+            onClick={() => setOffset(totalPag - p)}
+          >{p}</button>
+        ))}
+        <button className="pag-btn" onClick={() => setOffset(o => o - 1)} disabled={offset === 0}>›</button>
+        <span className="pag-info">{navLabel}</span>
+      </div>
     )}
     </>
   );
@@ -387,11 +383,11 @@ function GraficoDistribuicao({ registros }) {
 }
 
 // Gráfico: refeições por dia (barras verticais empilhadas por carb)
-function GraficoRefeicoes({ refeicoes }) {
+function GraficoRefeicoes({ refeicoes, refDate }) {
   const MAX_OFFSET = 3;
   const [offset, setOffset] = useState(0);
 
-  const hoje = new Date();
+  const hoje = refDate || new Date();
   const dias = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(hoje);
     d.setDate(d.getDate() - offset * 7 - (6 - i));
@@ -444,22 +440,24 @@ function GraficoRefeicoes({ refeicoes }) {
           );
         })}
       </div>
-      <GraficoNav
-        offset={offset} maxOffset={MAX_OFFSET}
-        onAnterior={() => setOffset(o => o + 1)}
-        onProximo={() => setOffset(o => o - 1)}
-        label={navLabel}
-      />
+      <div className="paginacao">
+        <button className="pag-btn" onClick={() => setOffset(o => o + 1)} disabled={offset >= MAX_OFFSET}>‹</button>
+        {Array.from({ length: MAX_OFFSET + 1 }, (_, i) => i + 1).map(p => (
+          <button key={p} className={`pag-btn ${p === MAX_OFFSET + 1 - offset ? 'pag-btn-ativo' : ''}`} onClick={() => setOffset(MAX_OFFSET + 1 - p)}>{p}</button>
+        ))}
+        <button className="pag-btn" onClick={() => setOffset(o => o - 1)} disabled={offset === 0}>›</button>
+        <span className="pag-info">{navLabel}</span>
+      </div>
     </div>
   );
 }
 
 // Gráfico: adesão a medicamentos (barras por dia)
-function GraficoAdesao({ dosesHistorico }) {
+function GraficoAdesao({ dosesHistorico, refDate }) {
   const MAX_OFFSET = 3;
   const [offset, setOffset] = useState(0);
 
-  const hoje = new Date();
+  const hoje = refDate || new Date();
   const dias = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(hoje);
     d.setDate(d.getDate() - offset * 7 - (6 - i));
@@ -512,25 +510,27 @@ function GraficoAdesao({ dosesHistorico }) {
           );
         })}
       </div>
-      <GraficoNav
-        offset={offset} maxOffset={MAX_OFFSET}
-        onAnterior={() => setOffset(o => o + 1)}
-        onProximo={() => setOffset(o => o - 1)}
-        label={navLabel}
-      />
+      <div className="paginacao">
+        <button className="pag-btn" onClick={() => setOffset(o => o + 1)} disabled={offset >= MAX_OFFSET}>‹</button>
+        {Array.from({ length: MAX_OFFSET + 1 }, (_, i) => i + 1).map(p => (
+          <button key={p} className={`pag-btn ${p === MAX_OFFSET + 1 - offset ? 'pag-btn-ativo' : ''}`} onClick={() => setOffset(MAX_OFFSET + 1 - p)}>{p}</button>
+        ))}
+        <button className="pag-btn" onClick={() => setOffset(o => o - 1)} disabled={offset === 0}>›</button>
+        <span className="pag-info">{navLabel}</span>
+      </div>
     </div>
   );
 }
 
 // Gráfico: frequência de tags de eventos (barras horizontais)
-function GraficoEventos({ eventos }) {
+function GraficoEventos({ eventos, refDate }) {
   const MAX_OFFSET = 3;
   const [offset, setOffset] = useState(0);
 
   const TAGS  = ['Estresse', 'Atividade Física', 'Doença/Febre', 'Álcool'];
   const CORES = { 'Estresse': '#f97316', 'Atividade Física': '#3b82f6', 'Doença/Febre': '#ef4444', 'Álcool': '#a855f7' };
 
-  const hoje = new Date();
+  const hoje = refDate || new Date();
   const fimPeriodo   = new Date(hoje); fimPeriodo.setDate(fimPeriodo.getDate() - offset * 7);
   const inicioPeriodo = new Date(fimPeriodo); inicioPeriodo.setDate(inicioPeriodo.getDate() - 6);
   inicioPeriodo.setHours(0, 0, 0, 0); fimPeriodo.setHours(23, 59, 59, 999);
@@ -562,12 +562,50 @@ function GraficoEventos({ eventos }) {
           <span className="dist-count">{c.count} {c.count === 1 ? 'dia' : 'dias'}</span>
         </div>
       ))}
-      <GraficoNav
-        offset={offset} maxOffset={MAX_OFFSET}
-        onAnterior={() => setOffset(o => o + 1)}
-        onProximo={() => setOffset(o => o - 1)}
-        label={navLabel}
-      />
+      <div className="paginacao">
+        <button className="pag-btn" onClick={() => setOffset(o => o + 1)} disabled={offset >= MAX_OFFSET}>‹</button>
+        {Array.from({ length: MAX_OFFSET + 1 }, (_, i) => i + 1).map(p => (
+          <button key={p} className={`pag-btn ${p === MAX_OFFSET + 1 - offset ? 'pag-btn-ativo' : ''}`} onClick={() => setOffset(MAX_OFFSET + 1 - p)}>{p}</button>
+        ))}
+        <button className="pag-btn" onClick={() => setOffset(o => o - 1)} disabled={offset === 0}>›</button>
+        <span className="pag-info">{navLabel}</span>
+      </div>
+    </div>
+  );
+}
+
+// Retorna o último dia do mês para ancorar os gráficos semanais em meses passados
+function refDateDoMes(mes) {
+  const d = new Date();
+  const atual = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  if (mes === atual) return undefined;
+  const [ano, mesNum] = mes.split('-').map(Number);
+  return new Date(ano, mesNum, 0);
+}
+
+function MesNav({ mes, setMes, mesesComDados }) {
+  const [ano, mesNum] = mes.split('-').map(Number);
+  const label = new Date(ano, mesNum - 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+  function irAnterior() {
+    const d = new Date(ano, mesNum - 2);
+    setMes(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  }
+  function irProximo() {
+    const d = new Date(ano, mesNum);
+    setMes(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  }
+  const ehAtual = (() => {
+    const d = new Date();
+    return mes === `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  })();
+  const anteriorBloqueado = mesesComDados ? !mesesComDados.some(m => m < mes) : false;
+
+  return (
+    <div className="lateral-mes-cab">
+      <button className="lateral-mes-btn" onClick={irAnterior} disabled={anteriorBloqueado} title="Mês anterior">‹</button>
+      <span className="lateral-mes-titulo">{label}</span>
+      <button className="lateral-mes-btn" onClick={irProximo} disabled={ehAtual} title="Próximo mês">›</button>
     </div>
   );
 }
@@ -642,6 +680,15 @@ export default function Dashboard() {
   const [obsEvento, setObsEvento]           = useState('');
   const [salvandoEvento, setSalvandoEvento] = useState(false);
 
+  // Navegação de mês por seção
+  const mesPadrao = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
+  const [mesRefeicao,    setMesRefeicao]    = useState(mesPadrao);
+  const [mesMedicamento, setMesMedicamento] = useState(mesPadrao);
+  const [mesContexto,    setMesContexto]    = useState(mesPadrao);
+  const [mesesComRefeicoes,    setMesesComRefeicoes]    = useState(null);
+  const [mesesComMedicamentos, setMesesComMedicamentos] = useState(null);
+  const [mesesComContexto,     setMesesComContexto]     = useState(null);
+
   // RF08
   const [refeicoes, setRefeicoes]             = useState([]);
   const [modalRef, setModalRef]               = useState(false);
@@ -682,29 +729,50 @@ export default function Dashboard() {
 
   const carregarEventos = useCallback(async () => {
     try {
-      const r = await listarEventos(30);
+      const r = await listarEventos(mesContexto);
       const lista = r.dados || [];
       setEventos(lista);
-      const hoje = dataBrasilia();
-      const evt = lista.find(e => new Date(e.dataDia).toISOString().slice(0, 10) === hoje);
-      if (evt) { setEventoHoje(evt); setTagsHoje(evt.tags || []); setObsEvento(evt.observacao || ''); }
-      else { setEventoHoje(null); setTagsHoje([]); setObsEvento(''); }
+      // Atualiza eventoHoje só quando o mês carregado é o atual
+      if (mesContexto === mesPadrao()) {
+        const hoje = dataBrasilia();
+        const evt = lista.find(e => new Date(e.dataDia).toISOString().slice(0, 10) === hoje);
+        if (evt) { setEventoHoje(evt); setTagsHoje(evt.tags || []); setObsEvento(evt.observacao || ''); }
+        else { setEventoHoje(null); setTagsHoje([]); setObsEvento(''); }
+      }
     } catch {}
+  }, [mesContexto]);
+
+  const carregarMesesComContexto = useCallback(async () => {
+    try { const r = await listarMesesEventos(); setMesesComContexto(r.dados || []); } catch {}
   }, []);
 
   const carregarRefeicoes = useCallback(async () => {
-    try { const r = await listarRefeicoes(30); setRefeicoes(r.dados || []); } catch {}
+    try { const r = await listarRefeicoes(mesRefeicao); setRefeicoes(r.dados || []); } catch {}
+  }, [mesRefeicao]);
+
+  const carregarMesesComRefeicoes = useCallback(async () => {
+    try { const r = await listarMesesRefeicoes(); setMesesComRefeicoes(r.dados || []); } catch {}
   }, []);
 
   const carregarDosesHistorico = useCallback(async () => {
-    try { const r = await historicoDoses(30); setDosesHistorico(r.dados || []); } catch {}
+    try { const r = await historicoDoses(mesMedicamento); setDosesHistorico(r.dados || []); } catch {}
+  }, [mesMedicamento]);
+
+  const carregarMesesComMedicamentos = useCallback(async () => {
+    try { const r = await listarMesesDoses(); setMesesComMedicamentos(r.dados || []); } catch {}
   }, []);
 
   useEffect(() => {
     carregarRegistros(); carregarMedicamentos(); carregarRegistrosDia();
     carregarEventos(); carregarRefeicoes(); carregarDosesHistorico();
-    carregarMesesComRegistros();
-  }, [carregarRegistros, carregarMedicamentos, carregarRegistrosDia, carregarEventos, carregarRefeicoes, carregarDosesHistorico, carregarMesesComRegistros]);
+    carregarMesesComRegistros(); carregarMesesComRefeicoes();
+    carregarMesesComMedicamentos(); carregarMesesComContexto();
+  }, [
+    carregarRegistros, carregarMedicamentos, carregarRegistrosDia,
+    carregarEventos, carregarRefeicoes, carregarDosesHistorico,
+    carregarMesesComRegistros, carregarMesesComRefeicoes,
+    carregarMesesComMedicamentos, carregarMesesComContexto,
+  ]);
 
   useEffect(() => {
     setAlertas([...gerarAlertasGlicemia(registros), ...gerarAlertasLembretes(registros, horarios)]);
@@ -1013,8 +1081,8 @@ export default function Dashboard() {
         <main className="dash-content">
           {mensagem && <div className="toast-mensagem">{mensagem}</div>}
 
-          {/* Alertas — visíveis em qualquer seção */}
-          {alertasVisiveis.length > 0 && (
+          {/* Alertas — topo apenas na visão geral; demais seções mostram na lateral */}
+          {secaoAtiva === 'visao-geral' && alertasVisiveis.length > 0 && (
             <div className="alertas-lista">
               {alertasVisiveis.map(alerta => (
                 <div key={alerta.id} className={`alerta-banner alerta-${alerta.tipo}`} role="alert">
@@ -1094,13 +1162,8 @@ export default function Dashboard() {
 
           {/* ── Seção: Registros Glicêmicos ────────────── */}
           {secaoAtiva === 'registros' && (
-            <>
-            {/* Seletor de mês — controla gráficos e tabela */}
-            <div className="secao-mes-nav">
-              <button className="mes-nav-btn" onClick={irMesAnterior} disabled={ehMesAnteriorBloqueado()} title="Mês anterior">‹</button>
-              <span className="mes-nav-label">{labelMes()}</span>
-              <button className="mes-nav-btn" onClick={irProximoMes} disabled={ehMesAtual()} title="Próximo mês">›</button>
-            </div>
+            <div className="secao-grade">
+            <div className="secao-principal">
 
             {/* Stats de registros */}
             <div className="stats-row">
@@ -1235,18 +1298,75 @@ export default function Dashboard() {
                 </>
               )}
             </section>
-            </>
+            </div>
+            <aside className="secao-lateral">
+              <div className="lateral-card">
+                <div className="lateral-mes-cab">
+                  <button className="lateral-mes-btn" onClick={irMesAnterior} disabled={ehMesAnteriorBloqueado()} title="Mês anterior">‹</button>
+                  <span className="lateral-mes-titulo">{labelMes()}</span>
+                  <button className="lateral-mes-btn" onClick={irProximoMes} disabled={ehMesAtual()} title="Próximo mês">›</button>
+                </div>
+                {registros.length === 0 ? (
+                  <p className="lateral-vazio">Nenhuma medição<br />em {labelMes()}</p>
+                ) : (
+                  <div className="lateral-resumo">
+                    <div className="lateral-stat">
+                      <span className="lateral-stat-val">{registros.length}</span>
+                      <span className="lateral-stat-lbl">medições no mês</span>
+                    </div>
+                    <div className="lateral-stat">
+                      <span className="lateral-stat-val lateral-stat-val--md">
+                        {Math.round(registros.reduce((s, r) => s + r.valor, 0) / registros.length)} mg/dL
+                      </span>
+                      <span className="lateral-stat-lbl">glicemia média</span>
+                    </div>
+                    <div className="lateral-dist">
+                      {[
+                        { label: 'Normal', cor: '#16a34a', cnt: registros.filter(r => classificar(r.valor) === 'normal').length },
+                        { label: 'Hiper',  cor: '#d97706', cnt: registros.filter(r => classificar(r.valor) === 'hiper').length },
+                        { label: 'Hipo',   cor: '#dc2626', cnt: registros.filter(r => classificar(r.valor) === 'hipo').length },
+                      ].map(({ label, cor, cnt }) => (
+                        <div key={label} className="lateral-dist-row">
+                          <span className="lateral-dist-dot" style={{ background: cor }} />
+                          <span className="lateral-dist-label">{label}</span>
+                          <span className="lateral-dist-count">{cnt}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              {alertasVisiveis.length > 0 && (
+                <div className="lateral-alertas">
+                  {alertasVisiveis.map(alerta => (
+                    <div key={alerta.id} className={`lateral-alerta lateral-alerta-${alerta.tipo}`} role="alert">
+                      <div className="lateral-alerta-topo">
+                        <span className="lateral-alerta-icone">
+                          {alerta.tipo === 'hipo' || alerta.tipo === 'hiper' ? '⚠' : '🔔'}
+                        </span>
+                        <span className="lateral-alerta-titulo">{alerta.titulo}</span>
+                        <button className="alerta-fechar" onClick={() => fecharAlerta(alerta.id)} aria-label="Fechar">×</button>
+                      </div>
+                      <p className="lateral-alerta-texto">{alerta.mensagem}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </aside>
+            </div>
           )}
 
           {/* ── Seção: Diário Alimentar ─────────────────── */}
           {secaoAtiva === 'diario' && (
-            <>
+            <div className="secao-grade">
+            <div className="secao-principal">
+
             {/* Stats do diário */}
             <div className="stats-row">
               <div className="stat-card">
-                <span className="stat-label">Refeições (7 dias)</span>
+                <span className="stat-label">Refeições</span>
                 <span className="stat-valor">{refeicoes.length}</span>
-                <span className="stat-sub">refeições registradas</span>
+                <span className="stat-sub">em {new Date(...mesRefeicao.split('-').map((v,i)=>i===1?v-1:+v)).toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}</span>
               </div>
               <div className="stat-card borda-normal">
                 <span className="stat-label">Carb Baixa</span>
@@ -1269,17 +1389,17 @@ export default function Dashboard() {
               <div className="painel-topo">
                 <div>
                   <h2 className="painel-titulo">Refeições por Dia</h2>
-                  <p className="painel-sub">Distribuição de carboidratos nos últimos 7 dias</p>
+                  <p className="painel-sub">Distribuição de carboidratos — semanas do mês</p>
                 </div>
               </div>
-              <GraficoRefeicoes refeicoes={refeicoes} />
+              <GraficoRefeicoes key={mesRefeicao} refeicoes={refeicoes} refDate={refDateDoMes(mesRefeicao)} />
             </section>
 
             <section className="painel">
               <div className="painel-topo">
                 <div>
                   <h2 className="painel-titulo">Diário Alimentar</h2>
-                  <p className="painel-sub">Refeições dos últimos 7 dias · associe ao teste pós-prandial</p>
+                  <p className="painel-sub">{refeicoes.length} refeição(ões) · associe ao teste pós-prandial</p>
                 </div>
                 <button className="btn-novo" onClick={abrirNovaRefeicao}>+ Refeição</button>
               </div>
@@ -1355,12 +1475,59 @@ export default function Dashboard() {
                 </div>
               )}
             </section>
-            </>
+            </div>
+            <aside className="secao-lateral">
+              <div className="lateral-card">
+                <MesNav mes={mesRefeicao} setMes={(m) => { setMesRefeicao(m); }} mesesComDados={mesesComRefeicoes} />
+                {refeicoes.length === 0 ? (
+                  <p className="lateral-vazio">Nenhuma refeição<br />registrada este mês</p>
+                ) : (
+                  <div className="lateral-resumo">
+                    <div className="lateral-stat">
+                      <span className="lateral-stat-val">{refeicoes.length}</span>
+                      <span className="lateral-stat-lbl">refeições no mês</span>
+                    </div>
+                    <div className="lateral-dist">
+                      {[
+                        { label: 'Carb baixo',    cor: '#16a34a', cnt: refeicoes.filter(r => r.carboidratos === 'baixa').length },
+                        { label: 'Carb moderado', cor: '#d97706', cnt: refeicoes.filter(r => r.carboidratos === 'moderada').length },
+                        { label: 'Carb alto',     cor: '#dc2626', cnt: refeicoes.filter(r => r.carboidratos === 'alta').length },
+                      ].map(({ label, cor, cnt }) => (
+                        <div key={label} className="lateral-dist-row">
+                          <span className="lateral-dist-dot" style={{ background: cor }} />
+                          <span className="lateral-dist-label">{label}</span>
+                          <span className="lateral-dist-count">{cnt}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              {alertasVisiveis.length > 0 && (
+                <div className="lateral-alertas">
+                  {alertasVisiveis.map(alerta => (
+                    <div key={alerta.id} className={`lateral-alerta lateral-alerta-${alerta.tipo}`} role="alert">
+                      <div className="lateral-alerta-topo">
+                        <span className="lateral-alerta-icone">
+                          {alerta.tipo === 'hipo' || alerta.tipo === 'hiper' ? '⚠' : '🔔'}
+                        </span>
+                        <span className="lateral-alerta-titulo">{alerta.titulo}</span>
+                        <button className="alerta-fechar" onClick={() => fecharAlerta(alerta.id)} aria-label="Fechar">×</button>
+                      </div>
+                      <p className="lateral-alerta-texto">{alerta.mensagem}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </aside>
+            </div>
           )}
 
           {/* ── Seção: Medicamentos ─────────────────────── */}
           {secaoAtiva === 'medicamentos' && (
-            <>
+            <div className="secao-grade">
+            <div className="secao-principal">
+
             {/* Stats de medicamentos */}
             {(() => {
               const totalSlots = medicamentos.reduce((a, m) => a + m.horarios.length, 0);
@@ -1387,24 +1554,24 @@ export default function Dashboard() {
               );
             })()}
 
-            {/* Gráfico de adesão 7 dias */}
+            {/* Gráfico de adesão */}
             <section className="painel">
               <div className="painel-topo">
                 <div>
                   <h2 className="painel-titulo">Adesão por Dia</h2>
-                  <p className="painel-sub">Doses registradas nos últimos 7 dias</p>
+                  <p className="painel-sub">Doses registradas — semanas do mês</p>
                 </div>
               </div>
-              <GraficoAdesao dosesHistorico={dosesHistorico} />
+              <GraficoAdesao key={mesMedicamento} dosesHistorico={dosesHistorico} refDate={refDateDoMes(mesMedicamento)} />
             </section>
 
-            {/* Histórico de doses recentes */}
+            {/* Histórico de doses */}
             {dosesHistorico.length > 0 && (
               <section className="painel">
                 <div className="painel-topo">
                   <div>
                     <h2 className="painel-titulo">Histórico de Doses</h2>
-                    <p className="painel-sub">Registros dos últimos 7 dias</p>
+                    <p className="painel-sub">{dosesHistorico.length} registro(s) no mês</p>
                   </div>
                 </div>
                 <div className="tabela-scroll">
@@ -1495,12 +1662,69 @@ export default function Dashboard() {
                 </div>
               )}
             </section>
-            </>
+            </div>
+            <aside className="secao-lateral">
+              <div className="lateral-card">
+                <MesNav mes={mesMedicamento} setMes={setMesMedicamento} mesesComDados={mesesComMedicamentos} />
+                {dosesHistorico.length === 0 ? (
+                  <p className="lateral-vazio">Nenhuma dose<br />registrada este mês</p>
+                ) : (() => {
+                  const tomado = dosesHistorico.filter(d => d.status === 'tomado').length;
+                  const pulado = dosesHistorico.filter(d => d.status === 'pulado').length;
+                  const adiado = dosesHistorico.filter(d => d.status === 'adiado').length;
+                  const pct = Math.round(tomado / dosesHistorico.length * 100);
+                  return (
+                    <div className="lateral-resumo">
+                      <div className="lateral-stat">
+                        <span className="lateral-stat-val">{pct}%</span>
+                        <span className="lateral-stat-lbl">adesão no mês</span>
+                      </div>
+                      <div className="lateral-stat">
+                        <span className="lateral-stat-val lateral-stat-val--md">{dosesHistorico.length}</span>
+                        <span className="lateral-stat-lbl">doses registradas</span>
+                      </div>
+                      <div className="lateral-dist">
+                        {[
+                          { label: 'Tomadas', cor: '#16a34a', cnt: tomado },
+                          { label: 'Puladas', cor: '#94a3b8', cnt: pulado },
+                          { label: 'Adiadas', cor: '#d97706', cnt: adiado },
+                        ].map(({ label, cor, cnt }) => (
+                          <div key={label} className="lateral-dist-row">
+                            <span className="lateral-dist-dot" style={{ background: cor }} />
+                            <span className="lateral-dist-label">{label}</span>
+                            <span className="lateral-dist-count">{cnt}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+              {alertasVisiveis.length > 0 && (
+                <div className="lateral-alertas">
+                  {alertasVisiveis.map(alerta => (
+                    <div key={alerta.id} className={`lateral-alerta lateral-alerta-${alerta.tipo}`} role="alert">
+                      <div className="lateral-alerta-topo">
+                        <span className="lateral-alerta-icone">
+                          {alerta.tipo === 'hipo' || alerta.tipo === 'hiper' ? '⚠' : '🔔'}
+                        </span>
+                        <span className="lateral-alerta-titulo">{alerta.titulo}</span>
+                        <button className="alerta-fechar" onClick={() => fecharAlerta(alerta.id)} aria-label="Fechar">×</button>
+                      </div>
+                      <p className="lateral-alerta-texto">{alerta.mensagem}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </aside>
+            </div>
           )}
 
           {/* ── Seção: Contexto do Dia ──────────────────── */}
           {secaoAtiva === 'contexto' && (
-            <>
+            <div className="secao-grade">
+            <div className="secao-principal">
+
             {/* Stats de contexto */}
             {(() => {
               const diasComContexto = eventos.length;
@@ -1512,7 +1736,7 @@ export default function Dashboard() {
                   <div className="stat-card">
                     <span className="stat-label">Dias com Contexto</span>
                     <span className="stat-valor">{diasComContexto}</span>
-                    <span className="stat-sub">nos últimos 30 dias</span>
+                    <span className="stat-sub">no mês selecionado</span>
                   </div>
                   <div className="stat-card">
                     <span className="stat-label">Tag Mais Frequente</span>
@@ -1532,14 +1756,14 @@ export default function Dashboard() {
             <section className="painel">
               <div className="painel-topo">
                 <div>
-                  <h2 className="painel-titulo">Frequência de Fatores (30 dias)</h2>
-                  <p className="painel-sub">Quantos dias cada fator foi registrado</p>
+                  <h2 className="painel-titulo">Frequência de Fatores</h2>
+                  <p className="painel-sub">Dias com cada fator registrado — semanas do mês</p>
                 </div>
               </div>
-              <GraficoEventos eventos={eventos} />
+              <GraficoEventos key={mesContexto} eventos={eventos} refDate={refDateDoMes(mesContexto)} />
             </section>
 
-            {/* Histórico de contextos passados */}
+            {/* Histórico de contextos */}
             {eventos.filter(e => {
               const hoje = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
               return new Date(e.dataDia).toISOString().slice(0, 10) !== hoje;
@@ -1548,7 +1772,7 @@ export default function Dashboard() {
                 <div className="painel-topo">
                   <div>
                     <h2 className="painel-titulo">Histórico de Contextos</h2>
-                    <p className="painel-sub">Registros dos últimos 30 dias</p>
+                    <p className="painel-sub">{eventos.length} registro(s) no mês</p>
                   </div>
                 </div>
                 <div className="tabela-scroll">
@@ -1621,7 +1845,55 @@ export default function Dashboard() {
                 </div>
               </form>
             </section>
-            </>
+            </div>
+            <aside className="secao-lateral">
+              <div className="lateral-card">
+                <MesNav mes={mesContexto} setMes={setMesContexto} mesesComDados={mesesComContexto} />
+                {(() => {
+                  const contagem = {};
+                  eventos.forEach(e => (e.tags || []).forEach(t => { contagem[t] = (contagem[t] || 0) + 1; }));
+                  const entradas = Object.entries(contagem).sort((a, b) => b[1] - a[1]);
+                  return (
+                    <div className="lateral-resumo">
+                      <div className="lateral-stat">
+                        <span className="lateral-stat-val">{eventos.length}</span>
+                        <span className="lateral-stat-lbl">eventos no mês</span>
+                      </div>
+                      {entradas.length > 0 ? (
+                        <div className="lateral-dist">
+                          {entradas.map(([tag, cnt]) => (
+                            <div key={tag} className="lateral-dist-row">
+                              <span className="lateral-dist-dot" style={{ background: TAG_CORES[tag] || '#94a3b8' }} />
+                              <span className="lateral-dist-label">{tag}</span>
+                              <span className="lateral-dist-count">{cnt}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="lateral-vazio">Nenhum fator<br />registrado</p>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+              {alertasVisiveis.length > 0 && (
+                <div className="lateral-alertas">
+                  {alertasVisiveis.map(alerta => (
+                    <div key={alerta.id} className={`lateral-alerta lateral-alerta-${alerta.tipo}`} role="alert">
+                      <div className="lateral-alerta-topo">
+                        <span className="lateral-alerta-icone">
+                          {alerta.tipo === 'hipo' || alerta.tipo === 'hiper' ? '⚠' : '🔔'}
+                        </span>
+                        <span className="lateral-alerta-titulo">{alerta.titulo}</span>
+                        <button className="alerta-fechar" onClick={() => fecharAlerta(alerta.id)} aria-label="Fechar">×</button>
+                      </div>
+                      <p className="lateral-alerta-texto">{alerta.mensagem}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </aside>
+            </div>
           )}
         </main>
       </div>

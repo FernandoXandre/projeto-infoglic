@@ -267,7 +267,6 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  max-width: 960px;
   width: 100%;
 }
 
@@ -1167,16 +1166,253 @@
   text-align: center;
 }
 
-/* ── Seletor de mês no topo de seção ────────────── */
-.secao-mes-nav {
+/* ── Layout de seção em duas colunas ─────────────── */
+.secao-grade {
   display: flex;
-  align-items: center;
-  gap: .25rem;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.secao-principal {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.secao-lateral {
+  width: 236px;
+  min-width: 236px;
+  position: sticky;
+  top: 76px;
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ── Card lateral do mês ─────────────────────────── */
+.lateral-card {
   background: var(--white);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: .45rem .75rem;
-  width: fit-content;
-  margin-bottom: 1rem;
+  border-radius: var(--radius);
+  padding: 1.1rem;
   box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.lateral-mes-cab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: .9rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.lateral-mes-titulo {
+  font-size: .84rem;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: capitalize;
+  letter-spacing: -.01em;
+  text-align: center;
+  flex: 1;
+  padding: 0 .25rem;
+}
+
+.lateral-mes-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  border: 1px solid var(--border-dark);
+  border-radius: 6px;
+  color: var(--primary);
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+  flex-shrink: 0;
+}
+.lateral-mes-btn:hover:not(:disabled) {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--white);
+}
+.lateral-mes-btn:disabled {
+  color: var(--text-muted);
+  cursor: default;
+  opacity: .4;
+}
+
+/* ── Resumo do mês na lateral ────────────────────── */
+.lateral-resumo {
+  display: flex;
+  flex-direction: column;
+  gap: .85rem;
+}
+
+.lateral-stat {
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+}
+
+.lateral-stat-val {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -.02em;
+}
+
+.lateral-stat-val--md {
+  font-size: 1.15rem;
+}
+
+.lateral-stat-lbl {
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.lateral-dist {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  padding-top: .35rem;
+  border-top: 1px solid var(--border);
+}
+
+.lateral-dist-row {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  font-size: .8rem;
+}
+
+.lateral-dist-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.lateral-dist-label {
+  flex: 1;
+  color: var(--text-body);
+}
+
+.lateral-dist-count {
+  font-weight: 700;
+  color: var(--text);
+  min-width: 20px;
+  text-align: right;
+}
+
+.lateral-vazio {
+  font-size: .82rem;
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: .25rem 0;
+  line-height: 1.5;
+}
+
+/* ── Alertas na lateral ──────────────────────────── */
+.lateral-alertas {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+
+.lateral-alerta {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border-dark);
+  border-radius: var(--radius-sm);
+  padding: .75rem .85rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+}
+
+.lateral-alerta-hipo    { border-left-color: var(--danger);  background: var(--danger-bg); }
+.lateral-alerta-hiper   { border-left-color: var(--warning); background: var(--warning-bg); }
+.lateral-alerta-lembrete { border-left-color: var(--info);   background: var(--info-bg); }
+
+.lateral-alerta-topo {
+  display: flex;
+  align-items: flex-start;
+  gap: .45rem;
+}
+
+.lateral-alerta-icone {
+  font-size: .9rem;
+  flex-shrink: 0;
+  margin-top: .05rem;
+}
+
+.lateral-alerta-titulo {
+  font-size: .8rem;
+  font-weight: 700;
+  flex: 1;
+  line-height: 1.3;
+  color: var(--text);
+}
+.lateral-alerta-hipo    .lateral-alerta-titulo { color: var(--danger); }
+.lateral-alerta-hiper   .lateral-alerta-titulo { color: var(--warning); }
+.lateral-alerta-lembrete .lateral-alerta-titulo { color: var(--info); }
+
+.lateral-alerta-texto {
+  font-size: .75rem;
+  color: var(--text-body);
+  line-height: 1.45;
+}
+
+/* Lateral em telas menores – empilha acima do conteúdo */
+@media (max-width: 1060px) {
+  .secao-grade { flex-direction: column; }
+  .secao-lateral {
+    position: static;
+    width: 100%;
+    min-width: 0;
+    order: -1;
+    flex-direction: row;
+    gap: 1rem;
+  }
+  .lateral-card {
+    flex-direction: row;
+    align-items: center;
+    padding: .7rem 1rem;
+    gap: 1.25rem;
+  }
+  .lateral-mes-cab {
+    padding-bottom: 0;
+    border-bottom: none;
+    border-right: 1px solid var(--border);
+    padding-right: 1.25rem;
+    flex-shrink: 0;
+  }
+  .lateral-resumo {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .lateral-dist { border-top: none; padding-top: 0; flex-direction: row; flex-wrap: wrap; gap: .5rem 1rem; }
+  .lateral-dist-row { flex-shrink: 0; }
+}
+
+@media (max-width: 640px) {
+  .lateral-resumo { display: none; }
+  .lateral-mes-cab { border-right: none; padding-right: 0; }
+  .lateral-card { justify-content: center; }
 }
