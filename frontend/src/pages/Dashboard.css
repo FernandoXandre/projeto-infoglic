@@ -419,6 +419,18 @@
 /* ── Tabela ──────────────────────────────────────── */
 .tabela-scroll { overflow-x: auto; border-radius: var(--radius-sm); border: 1px solid var(--border); }
 
+.tabela-scroll--historico {
+  max-height: 340px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.tabela-scroll--historico::-webkit-scrollbar { width: 6px; }
+.tabela-scroll--historico::-webkit-scrollbar-track { background: transparent; }
+.tabela-scroll--historico::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.tabela-scroll--historico .tabela th { position: sticky; top: 0; z-index: 1; }
+
 .tabela {
   width: 100%;
   border-collapse: collapse;
@@ -887,7 +899,19 @@
 }
 
 /* ── RF08: Diário Alimentar ──────────────────────── */
-.ref-lista { display: flex; flex-direction: column; gap: .75rem; }
+.ref-lista {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+  max-height: 560px;
+  overflow-y: auto;
+  padding-right: .25rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.ref-lista::-webkit-scrollbar { width: 6px; }
+.ref-lista::-webkit-scrollbar-track { background: transparent; }
+.ref-lista::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
 .ref-card {
   display: flex;
@@ -1126,6 +1150,16 @@
   font-size: .78rem;
   color: var(--text-muted);
   margin-left: .5rem;
+}
+.pag-reticencias {
+  min-width: 24px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .82rem;
+  color: var(--text-muted);
+  user-select: none;
 }
 
 /* ── Navegação dos gráficos ──────────────────────── */
@@ -1415,4 +1449,278 @@
   .lateral-resumo { display: none; }
   .lateral-mes-cab { border-right: none; padding-right: 0; }
   .lateral-card { justify-content: center; }
+}
+
+/* ── RF10: Relatório ─────────────────────────────────────────── */
+.relatorio-wrapper {
+  padding: 1.5rem 2rem 3rem;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.relatorio-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.relatorio-titulo {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.relatorio-acoes {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+
+.relatorio-periodo-btns {
+  display: flex;
+  gap: .4rem;
+}
+
+.periodo-btn {
+  padding: .35rem .75rem;
+  border: 1px solid var(--border-dark);
+  border-radius: 6px;
+  background: var(--white);
+  color: var(--text-body);
+  font-size: .82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+}
+.periodo-btn:hover { border-color: var(--primary); color: var(--primary); }
+.periodo-btn-ativo {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.btn-imprimir {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .4rem .9rem;
+  background: var(--white);
+  border: 1px solid var(--border-dark);
+  border-radius: 8px;
+  font-size: .84rem;
+  font-weight: 500;
+  color: var(--text-body);
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-imprimir:hover { border-color: var(--primary); color: var(--primary); }
+
+.relatorio-periodo-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  font-size: .84rem;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+.relatorio-periodo-info strong { color: var(--text); }
+.relatorio-gerado { font-size: .78rem; }
+
+.relatorio-carregando {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  justify-content: center;
+  padding: 3rem;
+  color: var(--text-muted);
+  font-size: .9rem;
+}
+
+.relatorio-corpo {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.rel-secao {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.rel-secao-titulo {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 1rem;
+  padding-bottom: .6rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.rel-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: .75rem;
+  margin-bottom: 1.25rem;
+}
+
+.rel-stat-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: .9rem .75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: .15rem;
+}
+.rel-stat-card--med { min-width: 100px; }
+
+.rel-stat-ok    { background: var(--success-bg); border-color: var(--success-border); }
+.rel-stat-alerta { background: var(--warning-bg); border-color: var(--warning-border); }
+.rel-stat-critico { background: var(--danger-bg); border-color: var(--danger-border); }
+
+.rel-stat-val {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+.rel-stat-unid {
+  font-size: .72rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.rel-stat-lbl {
+  font-size: .75rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.rel-med-resumo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+}
+
+/* Barra TIR */
+.rel-tir-barra-wrap { margin-top: .25rem; }
+.rel-tir-legenda {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: .78rem;
+  color: var(--text-muted);
+  margin-bottom: .4rem;
+  flex-wrap: wrap;
+}
+.rel-tir-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.rel-tir-barra {
+  height: 16px;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  background: var(--border);
+}
+.rel-tir-seg { height: 100%; transition: width .4s ease; }
+.rel-tir-hipo   { background: #dc2626; }
+.rel-tir-normal { background: #16a34a; }
+.rel-tir-hiper  { background: #d97706; }
+
+/* Carboidratos badges */
+.carb-baixa  { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+.carb-media  { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+.carb-alta   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+/* Badges glicemia */
+.badge {
+  display: inline-block;
+  padding: .2rem .5rem;
+  border-radius: 4px;
+  font-size: .78rem;
+  font-weight: 600;
+}
+.badge-hipo   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+.badge-normal { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+.badge-hiper  { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+
+.rel-vazio {
+  color: var(--text-muted);
+  font-size: .88rem;
+  text-align: center;
+  padding: .5rem 0;
+}
+
+.rel-aviso-legal {
+  background: var(--info-bg);
+  border: 1px solid var(--info-border);
+  border-radius: 8px;
+  padding: .85rem 1.1rem;
+  font-size: .8rem;
+  color: var(--info);
+  line-height: 1.5;
+}
+
+/* ── Print ──────────────────────────────────────────────────── */
+.print-only { display: none; }
+
+@media print {
+  .no-print { display: none !important; }
+  .print-only { display: block; }
+
+  .dashboard-container { display: block; }
+  .sidebar, .topbar { display: none !important; }
+  main { padding: 0 !important; }
+
+  .relatorio-wrapper {
+    padding: 1rem;
+    max-width: 100%;
+  }
+
+  .relatorio-cabecalho-print {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #000;
+  }
+  .relatorio-cabecalho-print h1 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 0 0 .25rem;
+  }
+  .relatorio-cabecalho-print p {
+    font-size: .85rem;
+    color: #555;
+    margin: .2rem 0;
+  }
+
+  .rel-secao {
+    page-break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #ccc;
+    margin-bottom: 1rem;
+  }
+
+  .rel-stat-val { font-size: 1.4rem; }
+
+  .tabela-scroll--historico {
+    max-height: none;
+    overflow: visible;
+  }
 }

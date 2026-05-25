@@ -84,6 +84,19 @@ const NAV_ITENS = [
       </svg>
     ),
   },
+  {
+    id: 'relatorio',
+    label: 'Relatório',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+        <polyline points="10 9 9 9 8 9"/>
+      </svg>
+    ),
+  },
 ];
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -125,6 +138,28 @@ function paraInputBrasil(dataHora) {
 
 function dataBrasilia(d) {
   return new Date(d || Date.now()).toLocaleDateString('sv-SE', { timeZone: TZ_BRASIL });
+}
+
+// Gera array de páginas com reticências — ex: [1,'…',4,5,6,'…',10]
+function gerarPaginas(total, atual) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const vizinhos = new Set(
+    [1, total, atual, atual - 1, atual + 1].filter(p => p >= 1 && p <= total)
+  );
+  const ordenados = [...vizinhos].sort((a, b) => a - b);
+  const resultado = [];
+  for (let i = 0; i < ordenados.length; i++) {
+    if (i > 0 && ordenados[i] - ordenados[i - 1] > 1) resultado.push('…');
+    resultado.push(ordenados[i]);
+  }
+  return resultado;
+}
+
+function desvioPadrao(valores) {
+  if (valores.length < 2) return 0;
+  const media = valores.reduce((s, v) => s + v, 0) / valores.length;
+  const variancia = valores.reduce((s, v) => s + (v - media) ** 2, 0) / (valores.length - 1);
+  return Math.sqrt(variancia);
 }
 
 // ── RF06: Alertas ──────────────────────────────────────────────
@@ -331,13 +366,15 @@ function GraficoGlicemia({ registros, eventos }) {
     {totalPag > 1 && (
       <div className="paginacao">
         <button className="pag-btn" onClick={() => setOffset(o => o + 1)} disabled={offset >= totalPag - 1}>‹</button>
-        {Array.from({ length: totalPag }, (_, i) => i + 1).map(p => (
-          <button
-            key={p}
-            className={`pag-btn ${p === totalPag - offset ? 'pag-btn-ativo' : ''}`}
-            onClick={() => setOffset(totalPag - p)}
-          >{p}</button>
-        ))}
+        {gerarPaginas(totalPag, totalPag - offset).map((p, i) =>
+          p === '…'
+            ? <span key={`e${i}`} className="pag-reticencias">…</span>
+            : <button
+                key={p}
+                className={`pag-btn ${p === totalPag - offset ? 'pag-btn-ativo' : ''}`}
+                onClick={() => setOffset(totalPag - p)}
+              >{p}</button>
+        )}
         <button className="pag-btn" onClick={() => setOffset(o => o - 1)} disabled={offset === 0}>›</button>
         <span className="pag-info">{navLabel}</span>
       </div>
@@ -702,6 +739,11 @@ export default function Dashboard() {
   // Histórico de doses (medicamentos)
   const [dosesHistorico, setDosesHistorico] = useState([]);
 
+  // RF10 – Relatório
+  const [periodoRelatorio, setPeriodoRelatorio] = useState(30);
+  const [dadosRelatorio,   setDadosRelatorio]   = useState(null);
+  const [carregandoRel,    setCarregandoRel]    = useState(false);
+
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
 
   // ── Loaders ───────────────────────────────────────────────
@@ -762,6 +804,74 @@ export default function Dashboard() {
     try { const r = await listarMesesDoses(); setMesesComMedicamentos(r.dados || []); } catch {}
   }, []);
 
+  const carregarDadosRelatorio = useCallback(async (dias) => {
+    setCarregandoRel(true);
+    try {
+      const fim = new Date();
+      const inicio = new Date();
+      inicio.setDate(inicio.getDate() - dias + 1);
+      inicio.setHours(0, 0, 0, 0);
+
+      const meses = new Set();
+      const cursor = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
+      while (cursor <= fim) {
+        meses.add(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`);
+        cursor.setMonth(cursor.getMonth() + 1);
+      }
+
+      const [todosRegs, todasRefs, todasDoses] = await Promise.all([
+        Promise.all([...meses].map(m => listar(m).then(r => r.dados || []))).then(a => a.flat()),
+        Promise.all([...meses].map(m => listarRefeicoes(m).then(r => r.dados || []))).then(a => a.flat()),
+        Promise.all([...meses].map(m => historicoDoses(m).then(r => r.dados || []))).then(a => a.flat()),
+      ]);
+
+      const regsNoPeriodo = todosRegs.filter(r => new Date(r.dataHora) >= inicio && new Date(r.dataHora) <= fim);
+      const refsNoPeriodo = todasRefs.filter(r => new Date(r.dataHora) >= inicio && new Date(r.dataHora) <= fim);
+      const dosesNoPeriodo = todasDoses.filter(d => {
+        const dia = new Date(d.dataDia);
+        return dia >= inicio && dia <= fim;
+      });
+
+      const valores = regsNoPeriodo.map(r => r.valor);
+      const media = valores.length ? valores.reduce((s, v) => s + v, 0) / valores.length : 0;
+      const dp = desvioPadrao(valores);
+      const tir = valores.length
+        ? Math.round((valores.filter(v => v >= 70 && v <= 180).length / valores.length) * 100)
+        : 0;
+      const hipos = regsNoPeriodo.filter(r => r.valor < 70).sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora));
+      const hipers = regsNoPeriodo.filter(r => r.valor > 180).length;
+
+      // Correlações alimentares: refeições vinculadas a pós-prandial
+      const correlacoes = refsNoPeriodo
+        .filter(r => r.registroVinculado)
+        .map(r => {
+          const reg = typeof r.registroVinculado === 'object' ? r.registroVinculado : regsNoPeriodo.find(g => g._id === r.registroVinculado);
+          return reg ? { refeicao: r, glicemia: reg } : null;
+        })
+        .filter(Boolean)
+        .sort((a, b) => new Date(b.refeicao.dataHora) - new Date(a.refeicao.dataHora));
+
+      // Aderência a medicamentos
+      const totalDoses = dosesNoPeriodo.length;
+      const tomadas = dosesNoPeriodo.filter(d => d.status === 'tomado').length;
+      const puladas = dosesNoPeriodo.filter(d => d.status === 'pulado').length;
+      const aderencia = totalDoses ? Math.round((tomadas / totalDoses) * 100) : null;
+
+      setDadosRelatorio({
+        periodo: { inicio, fim, dias },
+        registros: regsNoPeriodo,
+        glicemia: { media, dp, tir, total: valores.length, hipos, hipers },
+        correlacoes,
+        medicamentos: { totalDoses, tomadas, puladas, aderencia },
+        geradoEm: new Date(),
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setCarregandoRel(false);
+    }
+  }, []);
+
   useEffect(() => {
     carregarRegistros(); carregarMedicamentos(); carregarRegistrosDia();
     carregarEventos(); carregarRefeicoes(); carregarDosesHistorico();
@@ -778,6 +888,10 @@ export default function Dashboard() {
     setAlertas([...gerarAlertasGlicemia(registros), ...gerarAlertasLembretes(registros, horarios)]);
     setAlertasFechados(new Set());
   }, [registros, horarios]);
+
+  useEffect(() => {
+    if (secaoAtiva === 'relatorio') carregarDadosRelatorio(periodoRelatorio);
+  }, [secaoAtiva, periodoRelatorio, carregarDadosRelatorio]);
 
   // ── Handlers: registros glicêmicos ───────────────────────
   function abrirNovo() {
@@ -800,16 +914,31 @@ export default function Dashboard() {
     setSalvando(true); setErroForm('');
     try {
       const dados = { ...form, valor: valorNum, dataHora: form.dataHora + ':00-03:00' };
-      if (editandoId) { await atualizar(editandoId, dados); exibirMensagem('Registro atualizado!'); }
-      else { await criar(dados); exibirMensagem('Medição registrada!'); }
-      fecharModal(); carregarRegistros(); carregarMesesComRegistros();
+      if (editandoId) {
+        const resp = await atualizar(editandoId, dados);
+        setRegistros(prev => prev.map(r => r._id === editandoId ? resp.dados : r));
+        exibirMensagem('Registro atualizado!');
+      } else {
+        const resp = await criar(dados);
+        setRegistros(prev =>
+          [resp.dados, ...prev].sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora))
+        );
+        exibirMensagem('Medição registrada!');
+      }
+      fecharModal();
+      carregarMesesComRegistros();
     } catch (err) { setErroForm(err.response?.data?.mensagem || 'Erro ao salvar.'); }
     finally { setSalvando(false); }
   }
 
   async function handleRemover(id) {
     if (!window.confirm('Deseja remover este registro permanentemente?')) return;
-    try { await remover(id); exibirMensagem('Registro removido.'); carregarRegistros(); carregarMesesComRegistros(); }
+    try {
+      await remover(id);
+      setRegistros(prev => prev.filter(r => r._id !== id));
+      exibirMensagem('Registro removido.');
+      carregarMesesComRegistros();
+    }
     catch { exibirMensagem('Erro ao remover registro.'); }
   }
 
@@ -1276,13 +1405,15 @@ export default function Dashboard() {
                         disabled={paginaAtual === 1}
                       >‹</button>
 
-                      {Array.from({ length: totalPaginas }, (_, i) => i + 1).map(p => (
-                        <button
-                          key={p}
-                          className={`pag-btn ${p === paginaAtual ? 'pag-btn-ativo' : ''}`}
-                          onClick={() => setPaginaAtual(p)}
-                        >{p}</button>
-                      ))}
+                      {gerarPaginas(totalPaginas, paginaAtual).map((p, i) =>
+                        p === '…'
+                          ? <span key={`e${i}`} className="pag-reticencias">…</span>
+                          : <button
+                              key={p}
+                              className={`pag-btn ${p === paginaAtual ? 'pag-btn-ativo' : ''}`}
+                              onClick={() => setPaginaAtual(p)}
+                            >{p}</button>
+                      )}
 
                       <button
                         className="pag-btn"
@@ -1490,7 +1621,7 @@ export default function Dashboard() {
                     <div className="lateral-dist">
                       {[
                         { label: 'Carb baixo',    cor: '#16a34a', cnt: refeicoes.filter(r => r.carboidratos === 'baixa').length },
-                        { label: 'Carb moderado', cor: '#d97706', cnt: refeicoes.filter(r => r.carboidratos === 'moderada').length },
+                        { label: 'Carb moderado', cor: '#d97706', cnt: refeicoes.filter(r => r.carboidratos === 'media').length },
                         { label: 'Carb alto',     cor: '#dc2626', cnt: refeicoes.filter(r => r.carboidratos === 'alta').length },
                       ].map(({ label, cor, cnt }) => (
                         <div key={label} className="lateral-dist-row">
@@ -1574,7 +1705,7 @@ export default function Dashboard() {
                     <p className="painel-sub">{dosesHistorico.length} registro(s) no mês</p>
                   </div>
                 </div>
-                <div className="tabela-scroll">
+                <div className="tabela-scroll tabela-scroll--historico">
                   <table className="tabela">
                     <thead>
                       <tr><th>Data</th><th>Medicamento</th><th>Horário</th><th>Status</th><th>Local</th></tr>
@@ -1775,7 +1906,7 @@ export default function Dashboard() {
                     <p className="painel-sub">{eventos.length} registro(s) no mês</p>
                   </div>
                 </div>
-                <div className="tabela-scroll">
+                <div className="tabela-scroll tabela-scroll--historico">
                   <table className="tabela">
                     <thead>
                       <tr><th>Data</th><th>Fatores</th><th>Observação</th></tr>
@@ -1893,6 +2024,220 @@ export default function Dashboard() {
                 </div>
               )}
             </aside>
+            </div>
+          )}
+
+          {/* ── RF10: Relatório ─────────────────────────────── */}
+          {secaoAtiva === 'relatorio' && (
+            <div className="relatorio-wrapper">
+              <div className="relatorio-topo no-print">
+                <h2 className="relatorio-titulo">Relatório de Saúde Glicêmica</h2>
+                <div className="relatorio-acoes">
+                  <div className="relatorio-periodo-btns">
+                    {[7, 15, 30, 90].map(d => (
+                      <button
+                        key={d}
+                        className={`periodo-btn ${periodoRelatorio === d ? 'periodo-btn-ativo' : ''}`}
+                        onClick={() => setPeriodoRelatorio(d)}
+                      >
+                        {d} dias
+                      </button>
+                    ))}
+                  </div>
+                  <button className="btn-imprimir" onClick={() => window.print()}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                      <rect x="6" y="14" width="12" height="8"/>
+                    </svg>
+                    Imprimir / PDF
+                  </button>
+                </div>
+              </div>
+
+              {carregandoRel && (
+                <div className="relatorio-carregando">
+                  <span className="spinner" /> Gerando relatório...
+                </div>
+              )}
+
+              {!carregandoRel && dadosRelatorio && (() => {
+                const { periodo, glicemia, correlacoes, medicamentos: med } = dadosRelatorio;
+                const fmtData = d => new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: TZ_BRASIL });
+                const fmtDH  = d => new Date(d).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: TZ_BRASIL });
+
+                return (
+                  <div className="relatorio-corpo">
+                    {/* Cabeçalho impresso */}
+                    <div className="relatorio-cabecalho-print print-only">
+                      <h1>InfoGlic – Relatório de Saúde Glicêmica</h1>
+                      <p>Paciente: <strong>{usuario.nome || '—'}</strong> &nbsp;|&nbsp; Período: <strong>{fmtData(periodo.inicio)} a {fmtData(periodo.fim)}</strong></p>
+                      <p>Gerado em: {fmtDH(dadosRelatorio.geradoEm)}</p>
+                    </div>
+
+                    {/* Período */}
+                    <div className="relatorio-periodo-info no-print">
+                      <span>Período: <strong>{fmtData(periodo.inicio)}</strong> a <strong>{fmtData(periodo.fim)}</strong></span>
+                      <span className="relatorio-gerado">Gerado em {fmtDH(dadosRelatorio.geradoEm)}</span>
+                    </div>
+
+                    {/* Resumo glicêmico */}
+                    <section className="rel-secao">
+                      <h3 className="rel-secao-titulo">Resumo Glicêmico</h3>
+                      {glicemia.total === 0 ? (
+                        <p className="rel-vazio">Nenhum registro glicêmico no período selecionado.</p>
+                      ) : (
+                        <>
+                          <div className="rel-stats-grid">
+                            <div className="rel-stat-card">
+                              <span className="rel-stat-val">{Math.round(glicemia.media)}</span>
+                              <span className="rel-stat-unid">mg/dL</span>
+                              <span className="rel-stat-lbl">Média glicêmica</span>
+                            </div>
+                            <div className="rel-stat-card">
+                              <span className="rel-stat-val">{Math.round(glicemia.dp)}</span>
+                              <span className="rel-stat-unid">mg/dL</span>
+                              <span className="rel-stat-lbl">Desvio padrão</span>
+                            </div>
+                            <div className={`rel-stat-card ${glicemia.tir >= 70 ? 'rel-stat-ok' : glicemia.tir >= 50 ? 'rel-stat-alerta' : 'rel-stat-critico'}`}>
+                              <span className="rel-stat-val">{glicemia.tir}%</span>
+                              <span className="rel-stat-lbl">Tempo no Alvo<br />(70–180 mg/dL)</span>
+                            </div>
+                            <div className="rel-stat-card">
+                              <span className="rel-stat-val">{glicemia.total}</span>
+                              <span className="rel-stat-lbl">Medições realizadas</span>
+                            </div>
+                            <div className={`rel-stat-card ${glicemia.hipos.length === 0 ? 'rel-stat-ok' : 'rel-stat-critico'}`}>
+                              <span className="rel-stat-val">{glicemia.hipos.length}</span>
+                              <span className="rel-stat-lbl">Episódios de<br />hipoglicemia</span>
+                            </div>
+                            <div className={`rel-stat-card ${glicemia.hipers === 0 ? 'rel-stat-ok' : glicemia.hipers <= 5 ? 'rel-stat-alerta' : 'rel-stat-critico'}`}>
+                              <span className="rel-stat-val">{glicemia.hipers}</span>
+                              <span className="rel-stat-lbl">Episódios de<br />hiperglicemia</span>
+                            </div>
+                          </div>
+
+                          {/* Barra TIR */}
+                          <div className="rel-tir-barra-wrap">
+                            <div className="rel-tir-legenda">
+                              <span className="rel-tir-dot" style={{ background: '#dc2626' }} />Abaixo do alvo ({Math.round((glicemia.hipos.length / glicemia.total) * 100)}%)
+                              <span className="rel-tir-dot" style={{ background: '#16a34a', marginLeft: '1rem' }} />No alvo ({glicemia.tir}%)
+                              <span className="rel-tir-dot" style={{ background: '#d97706', marginLeft: '1rem' }} />Acima do alvo ({Math.round((glicemia.hipers / glicemia.total) * 100)}%)
+                            </div>
+                            <div className="rel-tir-barra">
+                              <div className="rel-tir-seg rel-tir-hipo" style={{ width: `${Math.round((glicemia.hipos.length / glicemia.total) * 100)}%` }} />
+                              <div className="rel-tir-seg rel-tir-normal" style={{ width: `${glicemia.tir}%` }} />
+                              <div className="rel-tir-seg rel-tir-hiper" style={{ width: `${Math.round((glicemia.hipers / glicemia.total) * 100)}%` }} />
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </section>
+
+                    {/* Episódios de hipoglicemia */}
+                    {glicemia.hipos.length > 0 && (
+                      <section className="rel-secao">
+                        <h3 className="rel-secao-titulo">Episódios de Hipoglicemia (&lt;70 mg/dL)</h3>
+                        <div className="tabela-scroll tabela-scroll--historico">
+                          <table className="tabela">
+                            <thead>
+                              <tr>
+                                <th>Data/Hora</th>
+                                <th>Valor</th>
+                                <th>Estado</th>
+                                <th>Observação</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {glicemia.hipos.map(r => (
+                                <tr key={r._id}>
+                                  <td>{fmtDH(r.dataHora)}</td>
+                                  <td><span className="badge badge-hipo">{r.valor} mg/dL</span></td>
+                                  <td>{r.estado}</td>
+                                  <td>{r.observacao || '—'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </section>
+                    )}
+
+                    {/* Correlações alimentares */}
+                    <section className="rel-secao">
+                      <h3 className="rel-secao-titulo">Correlações Alimentares (Pós-prandial vinculado)</h3>
+                      {correlacoes.length === 0 ? (
+                        <p className="rel-vazio">Nenhuma refeição vinculada a teste pós-prandial no período.</p>
+                      ) : (
+                        <div className="tabela-scroll tabela-scroll--historico">
+                          <table className="tabela">
+                            <thead>
+                              <tr>
+                                <th>Data/Hora</th>
+                                <th>Carboidratos</th>
+                                <th>Glicemia pós</th>
+                                <th>Classificação</th>
+                                <th>Descrição</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {correlacoes.map(({ refeicao, glicemia: g }) => (
+                                <tr key={refeicao._id}>
+                                  <td>{fmtDH(refeicao.dataHora)}</td>
+                                  <td>
+                                    <span className={`badge carb-${refeicao.carboidratos}`}>
+                                      {refeicao.carboidratos === 'baixa' ? 'Baixa' : refeicao.carboidratos === 'media' ? 'Média' : 'Alta'}
+                                    </span>
+                                  </td>
+                                  <td>{g.valor} mg/dL</td>
+                                  <td>
+                                    <span className={`badge badge-${classificar(g.valor)}`}>
+                                      {g.valor < 70 ? 'Hipoglicemia' : g.valor <= 180 ? 'Normal' : 'Hiperglicemia'}
+                                    </span>
+                                  </td>
+                                  <td>{refeicao.descricao || '—'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </section>
+
+                    {/* Aderência a medicamentos */}
+                    <section className="rel-secao">
+                      <h3 className="rel-secao-titulo">Aderência aos Medicamentos</h3>
+                      {med.totalDoses === 0 ? (
+                        <p className="rel-vazio">Nenhum registro de dose no período.</p>
+                      ) : (
+                        <div className="rel-med-resumo">
+                          <div className="rel-stat-card rel-stat-card--med">
+                            <span className="rel-stat-val">{med.totalDoses}</span>
+                            <span className="rel-stat-lbl">Doses programadas</span>
+                          </div>
+                          <div className={`rel-stat-card rel-stat-card--med ${med.aderencia >= 80 ? 'rel-stat-ok' : med.aderencia >= 60 ? 'rel-stat-alerta' : 'rel-stat-critico'}`}>
+                            <span className="rel-stat-val">{med.aderencia}%</span>
+                            <span className="rel-stat-lbl">Aderência</span>
+                          </div>
+                          <div className="rel-stat-card rel-stat-card--med rel-stat-ok">
+                            <span className="rel-stat-val">{med.tomadas}</span>
+                            <span className="rel-stat-lbl">Tomadas</span>
+                          </div>
+                          <div className="rel-stat-card rel-stat-card--med rel-stat-critico">
+                            <span className="rel-stat-val">{med.puladas}</span>
+                            <span className="rel-stat-lbl">Puladas</span>
+                          </div>
+                        </div>
+                      )}
+                    </section>
+
+                    {/* Aviso legal */}
+                    <div className="rel-aviso-legal">
+                      <strong>Aviso:</strong> Este relatório tem caráter informativo e não substitui a avaliação de um profissional de saúde.
+                      Consulte sempre seu médico ou equipe de saúde antes de tomar decisões baseadas nestes dados.
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
         </main>
