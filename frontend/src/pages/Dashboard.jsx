@@ -163,34 +163,69 @@ function desvioPadrao(valores) {
 }
 
 // ── RF06: Alertas ──────────────────────────────────────────────
-function gerarAlertasGlicemia(registros) {
+function gerarAlertasGlicemia(registros, mes) {
   if (!registros.length) return [];
-  const ultimo = registros[0];
-  if (ultimo.valor < 70) {
-    return [{
-      id: `hipo-${ultimo._id}`, tipo: 'hipo',
-      titulo: 'Hipoglicemia Detectada',
-      mensagem: `Sua última medição foi ${ultimo.valor} mg/dL, abaixo do limite seguro de 70 mg/dL.`,
-      instrucoes: [
-        'Consuma 15g de carboidratos de absorção rápida (suco de laranja, mel ou glicose)',
-        'Aguarde 15 minutos e repita a medição',
-        'Se o valor não subir, procure atendimento médico imediatamente',
-      ],
-    }];
+
+  const hoje     = new Date().toLocaleDateString('sv-SE', { timeZone: TZ_BRASIL });
+  const mesHoje  = hoje.slice(0, 7);
+  const ehMesAtual = !mes || mes === mesHoje;
+
+  if (ehMesAtual) {
+    // Alertas individuais para cada medição crítica de HOJE
+    const registrosHoje = registros.filter(r =>
+      new Date(r.dataHora).toLocaleDateString('sv-SE', { timeZone: TZ_BRASIL }) === hoje
+    );
+    return registrosHoje
+      .filter(r => r.valor < 70 || r.valor > 180)
+      .map(r => {
+        const ehHipo = r.valor < 70;
+        return {
+          id:     `${ehHipo ? 'hipo' : 'hiper'}-${r._id}`,
+          tipo:   ehHipo ? 'hipo' : 'hiper',
+          titulo: ehHipo ? 'Hipoglicemia Detectada' : 'Hiperglicemia Detectada',
+          mensagem: `Medição de ${r.valor} mg/dL às ${formatarDataHora(r.dataHora)} — ${r.estado}.`,
+          instrucoes: ehHipo
+            ? [
+                'Consuma 15g de carboidratos de absorção rápida (suco de laranja, mel ou glicose)',
+                'Aguarde 15 minutos e repita a medição',
+                'Se o valor não subir, procure atendimento médico imediatamente',
+              ]
+            : [
+                'Hidrate-se bem — beba bastante água',
+                'Verifique se tomou a medicação conforme prescrita',
+                'Consulte seu médico se o valor persistir elevado',
+              ],
+        };
+      });
   }
-  if (ultimo.valor > 180) {
-    return [{
-      id: `hiper-${ultimo._id}`, tipo: 'hiper',
-      titulo: 'Hiperglicemia Detectada',
-      mensagem: `Sua última medição foi ${ultimo.valor} mg/dL, acima do limite de 180 mg/dL.`,
-      instrucoes: [
-        'Hidrate-se bem — beba bastante água',
-        'Verifique se tomou a medicação conforme prescrita',
-        'Consulte seu médico se o valor persistir elevado',
-      ],
-    }];
+
+  // Meses anteriores: resumo compacto do mês visualizado
+  const hipos  = registros.filter(r => r.valor < 70);
+  const hipers = registros.filter(r => r.valor > 180);
+  const alertas = [];
+
+  if (hipos.length > 0) {
+    const menorValor = Math.min(...hipos.map(r => r.valor));
+    alertas.push({
+      id:       `hipo-resumo-${mes}`,
+      tipo:     'hipo',
+      titulo:   `${hipos.length} episódio${hipos.length > 1 ? 's' : ''} de Hipoglicemia neste mês`,
+      mensagem: `Menor valor registrado: ${menorValor} mg/dL`,
+      instrucoes: [],
+    });
   }
-  return [];
+  if (hipers.length > 0) {
+    const maiorValor = Math.max(...hipers.map(r => r.valor));
+    alertas.push({
+      id:       `hiper-resumo-${mes}`,
+      tipo:     'hiper',
+      titulo:   `${hipers.length} episódio${hipers.length > 1 ? 's' : ''} de Hiperglicemia neste mês`,
+      mensagem: `Maior valor registrado: ${maiorValor} mg/dL`,
+      instrucoes: [],
+    });
+  }
+
+  return alertas;
 }
 
 // ── RF05: Lembretes ────────────────────────────────────────────
@@ -243,6 +278,22 @@ function gerarAlertasLembretes(registros, horarios) {
   return alertas;
 }
 
+// Cores e abreviações dos estados glicêmicos
+const ESTADO_COR = {
+  'Jejum':         '#3b82f6',
+  'Pré-prandial':  '#f97316',
+  'Pós-prandial':  '#16a34a',
+  'Madrugada':     '#8b5cf6',
+  'Geral':         '#64748b',
+};
+const ESTADO_ABREV = {
+  'Jejum':         'Jejum',
+  'Pré-prandial':  'Pré',
+  'Pós-prandial':  'Pós',
+  'Madrugada':     'Mad.',
+  'Geral':         'Geral',
+};
+
 // ── Gráfico ─────────────────────────────────────────────────
 function GraficoGlicemia({ registros, eventos }) {
   const PONTOS = 14;
@@ -256,8 +307,8 @@ function GraficoGlicemia({ registros, eventos }) {
   // registros vem ordenado desc (mais recente primeiro); offset 0 = mais recentes
   const fatia = registros.slice(offset * PONTOS, offset * PONTOS + PONTOS);
   const dados = [...fatia].sort((a, b) => new Date(a.dataHora) - new Date(b.dataHora));
-  const W = 600, H = 260;
-  const PAD = { top: 30, right: 24, bottom: 66, left: 54 };
+  const W = 600, H = 278;
+  const PAD = { top: 30, right: 24, bottom: 84, left: 54 };
   const innerW = W - PAD.left - PAD.right;
   const innerH = H - PAD.top - PAD.bottom;
   const vals = dados.map(d => d.valor);
@@ -340,22 +391,40 @@ function GraficoGlicemia({ registros, eventos }) {
         const tooltipEvento = tagsNoDia.length ? tagsNoDia.join(', ') + (obsDia ? `\n${obsDia}` : '') : '';
         return (
           <g key={d._id}>
+            {/* Círculo do ponto com tooltip completo */}
             <circle cx={cx} cy={cy} r="5.5" fill={cor} stroke="#ffffff" strokeWidth="1.8">
-              {tooltipEvento && <title>{tooltipEvento}</title>}
+              <title>{`${d.valor} mg/dL — ${d.estado}\n${formatarDataHora(d.dataHora)}${d.observacao ? `\nObs: ${d.observacao}` : ''}${tooltipEvento ? `\nContexto: ${tooltipEvento}` : ''}`}</title>
             </circle>
+
+            {/* Valor acima do ponto */}
             <text x={cx} y={cy - 11} textAnchor="middle" fontSize="9.5" fontWeight="600" fill={cor}>{d.valor}</text>
-            <text x={cx} y={yFloor + 15} textAnchor="middle" fontSize="8.5" fill="#94a3b8">
+
+            {/* Horário — linha 1 abaixo do eixo */}
+            <text x={cx} y={yFloor + 13} textAnchor="middle" fontSize="8.5" fill="#475569" fontWeight="500">
+              {new Date(d.dataHora).toLocaleTimeString('pt-BR', { timeZone: TZ_BRASIL, hour: '2-digit', minute: '2-digit' })}
+            </text>
+
+            {/* Data — linha 2 */}
+            <text x={cx} y={yFloor + 25} textAnchor="middle" fontSize="8" fill="#94a3b8">
               {new Date(d.dataHora).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
             </text>
+
+            {/* Tipo/Estado — linha 3, colorido por categoria */}
+            <text x={cx} y={yFloor + 38} textAnchor="middle" fontSize="7.5" fontWeight="700"
+              fill={ESTADO_COR[d.estado] || '#64748b'}>
+              {ESTADO_ABREV[d.estado] || d.estado}
+            </text>
+
+            {/* Dots de eventos do contexto do dia */}
             {tagsNoDia.map((tag, ti) => (
               <circle key={tag}
-                cx={cx - ((tagsNoDia.length - 1) * 4) + ti * 8} cy={yFloor + 29}
+                cx={cx - ((tagsNoDia.length - 1) * 4) + ti * 8} cy={yFloor + 52}
                 r="3.5" fill={TAG_CORES[tag] || '#888'} opacity="0.85">
                 <title>{tag}{obsDia ? ` — ${obsDia}` : ''}</title>
               </circle>
             ))}
             {obsDia && tagsNoDia.length > 0 && (
-              <text x={cx} y={yFloor + 43} textAnchor="middle" fontSize="9" fill="rgba(100,116,139,0.7)">
+              <text x={cx} y={yFloor + 66} textAnchor="middle" fontSize="9" fill="rgba(100,116,139,0.7)">
                 <title>{obsDia}</title>✎
               </text>
             )}
@@ -885,9 +954,15 @@ export default function Dashboard() {
   ]);
 
   useEffect(() => {
-    setAlertas([...gerarAlertasGlicemia(registros), ...gerarAlertasLembretes(registros, horarios)]);
+    const mesHoje    = new Date().toLocaleDateString('sv-SE', { timeZone: TZ_BRASIL }).slice(0, 7);
+    const ehMesAtual = mesAtual === mesHoje;
+    setAlertas([
+      ...gerarAlertasGlicemia(registros, mesAtual),
+      // Lembretes de refeição só fazem sentido no mês atual
+      ...(ehMesAtual ? gerarAlertasLembretes(registros, horarios) : []),
+    ]);
     setAlertasFechados(new Set());
-  }, [registros, horarios]);
+  }, [registros, horarios, mesAtual]);
 
   useEffect(() => {
     if (secaoAtiva === 'relatorio') carregarDadosRelatorio(periodoRelatorio);
@@ -1210,7 +1285,7 @@ export default function Dashboard() {
         <main className="dash-content">
           {mensagem && <div className="toast-mensagem">{mensagem}</div>}
 
-          {/* Alertas — topo apenas na visão geral; demais seções mostram na lateral */}
+          {/* Alertas — topo apenas na Visão Geral; demais seções exibem abaixo do seletor de mês */}
           {secaoAtiva === 'visao-geral' && alertasVisiveis.length > 0 && (
             <div className="alertas-lista">
               {alertasVisiveis.map(alerta => (
