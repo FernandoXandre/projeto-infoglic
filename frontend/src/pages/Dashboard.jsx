@@ -14,6 +14,7 @@ import {
 } from '../services/medicamentoService';
 import { listarEventos, listarMesesEventos, salvarEvento, removerEvento } from '../services/eventoService';
 import { listarRefeicoes, listarMesesRefeicoes, criarRefeicao, atualizarRefeicao, removerRefeicao, vincularRefeicao } from '../services/refeicaoService';
+import { obterPerfil, atualizarPerfil } from '../services/clienteService';
 
 const ESTADOS = ['Jejum', 'Pré-prandial', 'Pós-prandial', 'Madrugada', 'Geral'];
 const HORARIOS_KEY = 'infoglic_horarios';
@@ -81,6 +82,17 @@ const NAV_ITENS = [
         <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
         <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
         <line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'insights',
+    label: 'Insights',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="9" y1="18" x2="15" y2="18"/>
+        <line x1="10" y1="22" x2="14" y2="22"/>
+        <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/>
       </svg>
     ),
   },
@@ -276,6 +288,95 @@ function gerarAlertasLembretes(registros, horarios) {
     });
 
   return alertas;
+}
+
+// ── RF09: Insights ────────────────────────────────────────────
+const JANELAS_INSIGHT = [
+  { chave: 'cafe',   nome: 'café da manhã', inicio: 6,  fim: 10 },
+  { chave: 'almoco', nome: 'almoço',        inicio: 11, fim: 17 },
+  { chave: 'jantar', nome: 'jantar',        inicio: 18, fim: 22 },
+];
+
+function gerarInsights(regsInsight, refsInsight, dosesInsight, meds, fsiVal, alvoVal) {
+  const insights = [];
+
+  // Insight 1 – Tendência hiperglicêmica pós-refeição
+  for (const janela of JANELAS_INSIGHT) {
+    const refsJanela = refsInsight
+      .filter(r => {
+        if (!r.registroVinculado) return false;
+        const h = parseInt(
+          new Date(r.dataHora).toLocaleString('sv-SE', { timeZone: TZ_BRASIL }).slice(11, 13),
+          10
+        );
+        return h >= janela.inicio && h < janela.fim;
+      })
+      .sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora));
+
+    if (refsJanela.length < 3) continue;
+
+    const valores = refsJanela.slice(0, 3).map(r => {
+      if (typeof r.registroVinculado === 'object' && r.registroVinculado !== null)
+        return r.registroVinculado.valor;
+      const reg = regsInsight.find(g => g._id === r.registroVinculado);
+      return reg ? reg.valor : null;
+    }).filter(v => v !== null);
+
+    if (valores.length >= 3 && valores.every(v => v > 180)) {
+      const media = Math.round(valores.reduce((s, v) => s + v, 0) / valores.length);
+      insights.push({
+        id: `tendencia-${janela.chave}`,
+        tipo: 'alimentar',
+        titulo: `Hiperglicemia recorrente após ${janela.nome}`,
+        descricao: `Nas últimas 3 refeições de ${janela.nome} vinculadas a medições, todas resultaram em hiperglicemia. Média pós-prandial: ${media} mg/dL.`,
+        recomendacao: `Revise a composição das refeições de ${janela.nome}, especialmente a quantidade de carboidratos de absorção rápida. Considere consultar um nutricionista.`,
+        severidade: 'alta',
+      });
+    }
+  }
+
+  // Insight 2 – Baixa adesão à medicação (últimos 7 dias)
+  const limite7 = new Date();
+  limite7.setDate(limite7.getDate() - 7);
+  const doses7 = dosesInsight.filter(d => new Date(d.dataDia) >= limite7);
+
+  if (doses7.length >= 3) {
+    const tomadas = doses7.filter(d => d.status === 'tomado').length;
+    const total   = doses7.length;
+    const taxa    = Math.round((tomadas / total) * 100);
+
+    if (taxa < 70) {
+      const puladas = doses7.filter(d => d.status === 'pulado').length;
+      insights.push({
+        id: 'adesao-medicacao',
+        tipo: 'medicacao',
+        titulo: 'Baixa adesão à medicação',
+        descricao: `Nos últimos 7 dias você tomou ${taxa}% das doses programadas (${tomadas} de ${total}). ${puladas} dose${puladas !== 1 ? 's foram' : ' foi'} pulada${puladas !== 1 ? 's' : ''}.`,
+        recomendacao: 'Manter a regularidade no uso da medicação é essencial para o controle glicêmico. Informe seu médico se houver dificuldades com a rotina.',
+        severidade: taxa < 50 ? 'alta' : 'media',
+      });
+    }
+  }
+
+  // Insight 3 – Sugestão de correção de insulina
+  const temInsulina = meds.some(m => m.tipo === 'Insulina' && m.ativo !== false);
+  if (fsiVal && fsiVal > 0 && alvoVal && temInsulina && regsInsight.length > 0) {
+    const ultimaGlic = [...regsInsight].sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora))[0];
+    if (ultimaGlic && ultimaGlic.valor > alvoVal) {
+      const dose = ((ultimaGlic.valor - alvoVal) / fsiVal).toFixed(1);
+      insights.push({
+        id: `correcao-insulina-${ultimaGlic._id}`,
+        tipo: 'insulina',
+        titulo: 'Sugestão de dose de correção',
+        descricao: `Sua última medição foi ${ultimaGlic.valor} mg/dL (${formatarDataHora(ultimaGlic.dataHora)}), ${ultimaGlic.valor - alvoVal} mg/dL acima da meta de ${alvoVal} mg/dL.`,
+        recomendacao: `Com base no seu FSI de ${fsiVal} mg/dL/U, uma dose de correção de aproximadamente ${dose} unidade${parseFloat(dose) !== 1 ? 's' : ''} pode ser necessária. Confirme sempre com seu médico antes de aplicar.`,
+        severidade: 'info',
+        dose,
+      });
+    }
+  }
+
+  return insights;
 }
 
 // Cores e abreviações dos estados glicêmicos
@@ -808,6 +909,14 @@ export default function Dashboard() {
   // Histórico de doses (medicamentos)
   const [dosesHistorico, setDosesHistorico] = useState([]);
 
+  // RF09 – Insights
+  const [fsi,             setFsi]             = useState(null);
+  const [glicemiaAlvo,    setGlicemiaAlvo]    = useState(100);
+  const [dadosInsights,   setDadosInsights]   = useState(null);
+  const [carregandoIns,   setCarregandoIns]   = useState(false);
+  const [formFsi,         setFormFsi]         = useState({ fsi: '', glicemiaAlvo: '100' });
+  const [salvandoFsi,     setSalvandoFsi]     = useState(false);
+
   // RF10 – Relatório
   const [periodoRelatorio, setPeriodoRelatorio] = useState(30);
   const [dadosRelatorio,   setDadosRelatorio]   = useState(null);
@@ -941,6 +1050,49 @@ export default function Dashboard() {
     }
   }, []);
 
+  const carregarDadosInsights = useCallback(async () => {
+    setCarregandoIns(true);
+    try {
+      const dias = 30;
+      const fim = new Date();
+      const inicio = new Date();
+      inicio.setDate(inicio.getDate() - dias + 1);
+      inicio.setHours(0, 0, 0, 0);
+
+      const meses = new Set();
+      const cursor = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
+      while (cursor <= fim) {
+        meses.add(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`);
+        cursor.setMonth(cursor.getMonth() + 1);
+      }
+
+      const [todosRegs, todasRefs, todasDoses, perfil] = await Promise.all([
+        Promise.all([...meses].map(m => listar(m).then(r => r.dados || []))).then(a => a.flat()),
+        Promise.all([...meses].map(m => listarRefeicoes(m).then(r => r.dados || []))).then(a => a.flat()),
+        Promise.all([...meses].map(m => historicoDoses(m).then(r => r.dados || []))).then(a => a.flat()),
+        obterPerfil(),
+      ]);
+
+      const regsNoPeriodo  = todosRegs.filter(r => new Date(r.dataHora) >= inicio);
+      const refsNoPeriodo  = todasRefs.filter(r => new Date(r.dataHora) >= inicio);
+      const dosesNoPeriodo = todasDoses.filter(d => {
+        const dia = new Date(d.dataDia);
+        return dia >= inicio && dia <= fim;
+      });
+
+      const fsiVal  = perfil.dados?.fatorSensibilidade || null;
+      const alvoVal = perfil.dados?.glicemiaAlvo || 100;
+      setFsi(fsiVal);
+      setGlicemiaAlvo(alvoVal);
+      setFormFsi({ fsi: fsiVal ?? '', glicemiaAlvo: alvoVal });
+      setDadosInsights({ regs: regsNoPeriodo, refs: refsNoPeriodo, doses: dosesNoPeriodo });
+    } catch (err) {
+      console.error('Erro ao carregar dados de insights:', err);
+    } finally {
+      setCarregandoIns(false);
+    }
+  }, []);
+
   useEffect(() => {
     carregarRegistros(); carregarMedicamentos(); carregarRegistrosDia();
     carregarEventos(); carregarRefeicoes(); carregarDosesHistorico();
@@ -967,6 +1119,10 @@ export default function Dashboard() {
   useEffect(() => {
     if (secaoAtiva === 'relatorio') carregarDadosRelatorio(periodoRelatorio);
   }, [secaoAtiva, periodoRelatorio, carregarDadosRelatorio]);
+
+  useEffect(() => {
+    if (secaoAtiva === 'insights') carregarDadosInsights();
+  }, [secaoAtiva, carregarDadosInsights]);
 
   // ── Handlers: registros glicêmicos ───────────────────────
   function abrirNovo() {
@@ -1027,6 +1183,24 @@ export default function Dashboard() {
     e.preventDefault();
     localStorage.setItem(HORARIOS_KEY, JSON.stringify(formHorarios));
     setHorarios(formHorarios); setModalHorarios(false); exibirMensagem('Horários salvos!');
+  }
+
+  async function handleSalvarFsi(e) {
+    e.preventDefault();
+    const fsiNum  = formFsi.fsi !== '' ? Number(formFsi.fsi) : null;
+    const alvoNum = Number(formFsi.glicemiaAlvo) || 100;
+    if (fsiNum !== null && (fsiNum < 1 || fsiNum > 200))
+      return exibirMensagem('FSI deve estar entre 1 e 200.');
+    if (alvoNum < 60 || alvoNum > 200)
+      return exibirMensagem('Glicemia alvo deve estar entre 60 e 200 mg/dL.');
+    setSalvandoFsi(true);
+    try {
+      await atualizarPerfil({ fatorSensibilidade: fsiNum, glicemiaAlvo: alvoNum });
+      setFsi(fsiNum);
+      setGlicemiaAlvo(alvoNum);
+      exibirMensagem('Configurações salvas!');
+    } catch { exibirMensagem('Erro ao salvar configurações.'); }
+    finally { setSalvandoFsi(false); }
   }
 
   // ── RF07: handlers ────────────────────────────────────────
@@ -2099,6 +2273,103 @@ export default function Dashboard() {
                 </div>
               )}
             </aside>
+            </div>
+          )}
+
+          {/* ── RF09: Insights ──────────────────────────────── */}
+          {secaoAtiva === 'insights' && (
+            <div className="insights-wrapper">
+
+              {/* Configurações de análise */}
+              <section className="painel insights-config-painel">
+                <div className="painel-topo">
+                  <div>
+                    <h2 className="painel-titulo">Configurações de Análise</h2>
+                    <p className="painel-sub">Parâmetros para o cálculo de dose de correção de insulina</p>
+                  </div>
+                </div>
+                <form onSubmit={handleSalvarFsi} className="insights-config-form" noValidate>
+                  <div className="insights-config-campos">
+                    <div className="campo-grupo">
+                      <label htmlFor="ins-fsi">Fator de Sensibilidade à Insulina – FSI (mg/dL / unidade)</label>
+                      <input
+                        id="ins-fsi" type="number" min="1" max="200"
+                        placeholder="Ex: 40 — orientado pelo médico"
+                        value={formFsi.fsi}
+                        onChange={e => setFormFsi(f => ({ ...f, fsi: e.target.value }))}
+                      />
+                      <span className="campo-hint">Quanto 1 unidade de insulina reduz sua glicemia. Deixe em branco para não usar esta análise.</span>
+                    </div>
+                    <div className="campo-grupo">
+                      <label htmlFor="ins-alvo">Glicemia Alvo (mg/dL)</label>
+                      <input
+                        id="ins-alvo" type="number" min="60" max="200"
+                        placeholder="Ex: 100"
+                        value={formFsi.glicemiaAlvo}
+                        onChange={e => setFormFsi(f => ({ ...f, glicemiaAlvo: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                  <button type="submit" className="btn-salvar" style={{ alignSelf: 'flex-start' }} disabled={salvandoFsi}>
+                    {salvandoFsi ? <span className="spinner" /> : 'Salvar Configurações'}
+                  </button>
+                </form>
+              </section>
+
+              {/* Cards de insights */}
+              {carregandoIns ? (
+                <div className="relatorio-carregando">
+                  <span className="spinner" /> Analisando seus dados...
+                </div>
+              ) : dadosInsights && (() => {
+                const lista = gerarInsights(
+                  dadosInsights.regs, dadosInsights.refs, dadosInsights.doses,
+                  medicamentos, fsi, glicemiaAlvo
+                );
+                return (
+                  <div className="insights-lista">
+                    {lista.length === 0 ? (
+                      <div className="insights-vazio">
+                        <span className="insights-vazio-icone">✓</span>
+                        <p className="insights-vazio-titulo">Nenhum insight identificado</p>
+                        <p className="insights-vazio-sub">
+                          Seus dados dos últimos 30 dias estão dentro do esperado. Continue registrando para análises mais precisas.
+                        </p>
+                      </div>
+                    ) : (
+                      lista.map(insight => (
+                        <div key={insight.id} className={`insight-card insight-card--${insight.severidade}`}>
+                          <div className="insight-card-cabecalho">
+                            <span className="insight-card-icone">
+                              {insight.tipo === 'alimentar' ? '🍽️' : insight.tipo === 'medicacao' ? '💊' : '💉'}
+                            </span>
+                            <div>
+                              <span className="insight-card-tipo">
+                                {insight.tipo === 'alimentar' ? 'Alimentação' : insight.tipo === 'medicacao' ? 'Medicação' : 'Insulina'}
+                              </span>
+                              <h3 className="insight-card-titulo">{insight.titulo}</h3>
+                            </div>
+                            <span className={`insight-badge insight-badge--${insight.severidade}`}>
+                              {insight.severidade === 'alta' ? 'Atenção' : insight.severidade === 'media' ? 'Aviso' : 'Info'}
+                            </span>
+                          </div>
+                          <p className="insight-card-descricao">{insight.descricao}</p>
+                          <div className="insight-card-rec">
+                            <strong>Recomendação:</strong> {insight.recomendacao}
+                          </div>
+                        </div>
+                      ))
+                    )}
+
+                    {/* Disclaimer legal */}
+                    <div className="insights-disclaimer">
+                      <strong>⚕ Aviso Médico:</strong> As sugestões apresentadas têm caráter exclusivamente informativo e não substituem
+                      a avaliação de um profissional de saúde. Sempre consulte seu médico ou equipe de saúde antes de tomar
+                      decisões relacionadas à sua medicação ou dieta.
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
 

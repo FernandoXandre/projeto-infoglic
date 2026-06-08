@@ -160,4 +160,26 @@ const buscarClientePorId = async (req, res) => {
   }
 };
 
-module.exports = { cadastrarCliente, listarClientes, buscarClientePorId };
+// RF09 – Retorna perfil do usuário autenticado
+const obterPerfil = async (req, res) => {
+  return res.status(200).json({ sucesso: true, dados: req.usuario });
+};
+
+// RF09 – Atualiza FSI e glicemia alvo do usuário autenticado
+const atualizarPerfil = async (req, res) => {
+  try {
+    const { fatorSensibilidade, glicemiaAlvo } = req.body;
+    const cliente = await Cliente.findById(req.usuario._id);
+    if (!cliente) return res.status(404).json({ sucesso: false, mensagem: 'Usuário não encontrado.' });
+
+    if (fatorSensibilidade !== undefined) cliente.fatorSensibilidade = fatorSensibilidade || null;
+    if (glicemiaAlvo !== undefined) cliente.glicemiaAlvo = glicemiaAlvo || 100;
+
+    await cliente.save();
+    return res.status(200).json({ sucesso: true, dados: cliente, mensagem: 'Perfil atualizado.' });
+  } catch (error) {
+    return res.status(500).json({ sucesso: false, mensagem: 'Erro ao atualizar perfil.' });
+  }
+};
+
+module.exports = { cadastrarCliente, listarClientes, buscarClientePorId, obterPerfil, atualizarPerfil };

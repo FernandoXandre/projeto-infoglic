@@ -87,6 +87,20 @@ const clienteSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    // RF09 – fator de sensibilidade à insulina (mg/dL por unidade)
+    fatorSensibilidade: {
+      type: Number,
+      min: [1, 'FSI deve ser entre 1 e 200'],
+      max: [200, 'FSI deve ser entre 1 e 200'],
+      default: null,
+    },
+    // RF09 – glicemia alvo para cálculo de correção
+    glicemiaAlvo: {
+      type: Number,
+      min: [60, 'Glicemia alvo mínima é 60 mg/dL'],
+      max: [200, 'Glicemia alvo máxima é 200 mg/dL'],
+      default: 100,
+    },
   },
   {
     timestamps: true,
